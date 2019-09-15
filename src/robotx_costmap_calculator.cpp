@@ -13,7 +13,9 @@ namespace robotx_costmap_calculator
         pnh_ = getPrivateNodeHandle();
         pnh_.param<std::string>("points_raw_topic", points_raw_topic_, "points_raw");
         pnh_.param<std::string>("output_topic", output_topic_, "output");
-        costmap_ptr_ = std::unique_ptr<CostMap>(new CostMap(0.4,50));
+        pnh_.param<double>("resolution", resolution_, 1.0);
+        pnh_.param<int>("num_grids", num_grids_, 20.0);
+        costmap_ptr_ = std::unique_ptr<CostMap>(new CostMap(resolution_,num_grids_));
         grid_map_pub_ = pnh_.advertise<grid_map_msgs::GridMap>(output_topic_,10);
         pointcloud_sub_ = nh_.subscribe(points_raw_topic_, 10, &RobotXCostmapCalculator::pointCloudCallback, this);
     }

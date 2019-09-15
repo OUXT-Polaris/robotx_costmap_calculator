@@ -2,9 +2,13 @@
 <launch>
     <arg name="output_topic" default="output"/>
     <arg name="points_raw_topic" default="input/points_raw"/>
+    <arg name="resolution" default="1.0"/>
+    <arg name="num_grids" default="20"/>
 
     <node pkg="robotx_costmap_calculator" type="robotx_costmap_calculator_node" name="robotx_costmap_calculator_node" output="log" respawn="false" respawn_delay="0">
         <param name="output_topic" value="$(arg output_topic)"/>
         <param name="points_raw_topic" value="$(arg points_raw_topic)"/>
+        <param name="resolution" value="$(arg resolution)"/>
+        <param name="num_grids" value="$(arg num_grids)"/>
     </node>
 </launch>

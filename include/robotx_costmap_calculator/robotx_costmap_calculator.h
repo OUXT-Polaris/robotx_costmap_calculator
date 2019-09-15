@@ -34,6 +34,8 @@ namespace robotx_costmap_calculator
         std::unique_ptr<CostMap> costmap_ptr_;
         std::string points_raw_topic_;
         std::string output_topic_;
+        double resolution_;
+        int num_grids_;
     };
 }
 
