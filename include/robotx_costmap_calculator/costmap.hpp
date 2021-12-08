@@ -44,7 +44,7 @@ extern "C" {
 #endif
 
 // HEaders in ROS
-#include <costmap_calculator/base_layer.hpp>
+#include <robotx_costmap_calculator/base_layer.hpp>
 #include <grid_map_msgs/msg/grid_map.hpp>
 #include <grid_map_core/GridMap.hpp>
 #include <grid_map_ros/grid_map_ros.hpp>
@@ -63,7 +63,6 @@ namespace costmap_calculator
         grid_map_msgs::msg::GridMap getGridMap()
         {
             grid_map_msgs::msg::GridMap grid_map;
-            grid_map::GridMap map_;
             grid_map::GridMapRosConverter::toMessage(map_,grid_map);
             return grid_map;
         }
@@ -75,4 +74,4 @@ namespace costmap_calculator
     };
 }
 
-#endif  //COSTMAP_CALCULATOR_COSTMAP_HPP_
+#endif  //ROBOTX_COSTMAP_CALCULATOR_COSTMAP_HPP_

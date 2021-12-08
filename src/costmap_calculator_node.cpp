@@ -1,4 +1,4 @@
-#include <costmap_calculator_component.hpp>
+#include <robot_costmap_calculator_component.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <memory>
 

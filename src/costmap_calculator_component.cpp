@@ -1,4 +1,4 @@
-#include <costmap_calculator/costmap_calculator_component.hpp>
+#include <robotx_costmap_calculator/costmap_calculator_component.hpp>
 
 namespace costmap_calculator
 {
