@@ -1,65 +1,102 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.8)
 project(robotx_costmap_calculator)
 
-add_compile_options(-std=c++11)
+#Default to C99
+if(NOT CMAKE_C_STANDARD)
+  set(CMAKE_C_STANDARD 99)
+endif()
 
-find_package(catkin REQUIRED COMPONENTS
-  grid_map_core
-  grid_map_ros
-  grid_map_cv
-  grid_map_filters
-  grid_map_loader
-  grid_map_msgs
-  grid_map_octomap
-  grid_map_rviz_plugin
-  grid_map_visualization
-  nodelet
-  pcl_ros
-  pluginlib
-  roscpp
-)
+#Default to C++14
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
 
-catkin_package(
-  INCLUDE_DIRS include
-#  LIBRARIES robotx_costmap_calculator
-  CATKIN_DEPENDS grid_map nodelet pcl_ros pluginlib roscpp
-#  DEPENDS system_lib
-)
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
+
+
+# find dependencies
+find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
+
+# find dependencies
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(rclcpp_components REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(grid_map_msgs REQUIRED)
+find_package(grid_map_core REQUIRED)
+find_package(grid_map_ros REQUIRED)
+find_package(pcl_apps_msgs REQUIRED)
+find_package(PCL REQUIRED)
 
 include_directories(
   include
-  ${catkin_INCLUDE_DIRS}
+  ${PCL_INCLUDE_DIRS}
+)
+link_directories(
+  ${PCL_LIBRARY_DIRS}
 )
 
-set(ROBOTX_COSTMAP_CALCULATOR_SRC
-  src/robotx_costmap_calculator.cpp
-  src/object_layer.cpp
+
+add_library(costmap_calculator_component SHARED
   src/base_layer.cpp
   src/costmap.cpp
-)
+  src/costmap_calculator_component.cpp
+  )
+target_compile_definitions(costmap_calculator_component
+  PRIVATE "COSTMAP_CALCULATOR_COMPONENT_BUILDING_DLL")
+ament_target_dependencies(costmap_calculator_component
+  rclcpp
+  rclcpp_components
+  sensor_msgs
+  grid_map_msgs
+  grid_map_core
+  grid_map_ros
+  pcl_apps_msgs)
+rclcpp_components_register_nodes(costmap_calculator_component
+ "costmap_calculator_component::CostmapCalculatorComponent")
+ament_export_libraries(costmap_calculator_component)
 
-add_library(robotx_costmap_calculator
-  ${ROBOTX_COSTMAP_CALCULATOR_SRC}
+add_executable(costmap_calculator_node
+  src/costmap_calculator_node.cpp
 )
-target_link_libraries(robotx_costmap_calculator ${Boost_LIBRARIES} ${catkin_LIBRARIES} ${PCL_LIBRARIES})
-class_loader_hide_library_symbols(robotx_costmap_calculator)
+target_link_libraries(costmap_calculator_node costmap_calculator_component base_layer grid_costmap)
+ament_target_dependencies(costmap_calculator_node
+  rclcpp
+  rclcpp_components)
 
-add_executable(robotx_costmap_calculator_node
-  src/robotx_costmap_calculator_node.cpp
+
+install(TARGETS
+  costmap_calculator_node
+  DESTINATION lib/costmap_calculator
 )
-target_link_libraries(robotx_costmap_calculator_node ${Boost_LIBRARIES} ${catkin_LIBRARIES} ${PCL_LIBRARIES})
-
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+install(TARGETS costmap_calculator_component
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+  INCLUDES DESTINATION include)
 
 install(
-  TARGETS robotx_costmap_calculator robotx_costmap_calculator_node
-  RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  DIRECTORY "include/"
+  DESTINATION include
 )
 
-foreach(dir launch)
-  install(DIRECTORY ${dir}/
-    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/${dir})
-endforeach(dir)
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+endif()
+
+
+ament_export_dependencies(ament_cmake)
+ament_export_dependencies(rclcpp)
+ament_export_dependencies(rclcpp_components)
+ament_export_dependencies(sensor_msgs)
+ament_export_dependencies(grid_map_msgs)
+ament_export_dependencies(grid_map_core)
+ament_export_dependencies(grid_map_ros)
+ament_export_dependencies(pcl_apps_msgs)
+ament_export_include_directories(include)
+ament_package()

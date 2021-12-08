@@ -1,6 +1,6 @@
-#include <robotx_costmap_calculator/base_layer.h>
+#include <costmap_calculator/base_layer.hpp>
 
-namespace robotx_costmap_calculator
+namespace costmap_calculator
 {
     BaseLayer::BaseLayer(double resolution,int num_grids)
     {
@@ -20,7 +20,7 @@ namespace robotx_costmap_calculator
         return ret;
     }
 
-    void BaseLayer::overlayPointCloud(grid_map::GridMap& map,const sensor_msgs::PointCloud2::ConstPtr cloud)
+    void BaseLayer::overlayPointCloud(grid_map::GridMap& map,const sensor_msgs::msg::PointCloud2::SharedPtr cloud)
     {
         pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_cloud(new pcl::PointCloud<pcl::PointXYZ>());
         pcl::fromROSMsg(*cloud, *pcl_cloud);

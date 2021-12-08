@@ -1,33 +1,27 @@
 <?xml version="1.0"?>
-<package format="2">
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
   <name>robotx_costmap_calculator</name>
   <version>0.0.0</version>
-  <description>The robotx_costmap_calculator package</description>
+  <description>TODO: Package description</description>
+  <maintainer email="aki.grade2580@outlook.jp">asahi</maintainer>
+  <license>TODO: License declaration</license>
 
-  <maintainer email="ms.kataoka@gmail.com">masaya kataoka</maintainer>
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <license>Apache 2.0</license>
+  <depend>rclcpp</depend>
+  <depend>rclcpp_components</depend>
+  <depend>sensor_msgs</depend>
+  <depend>gridmap_msgs</depend>
+  <depend>gridmap_core</depend>
+  <depend>gridmap_ros</depend>
+  <depend>pcl_apps_msgs</depend>
 
-  <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>grid_map</build_depend>
-  <build_depend>nodelet</build_depend>
-  <build_depend>pcl_ros</build_depend>
-  <build_depend>pluginlib</build_depend>
-  <build_depend>roscpp</build_depend>
-  <build_export_depend>grid_map</build_export_depend>
-  <build_export_depend>nodelet</build_export_depend>
-  <build_export_depend>pcl_ros</build_export_depend>
-  <build_export_depend>pluginlib</build_export_depend>
-  <build_export_depend>roscpp</build_export_depend>
-  <exec_depend>grid_map</exec_depend>
-  <exec_depend>nodelet</exec_depend>
-  <exec_depend>pcl_ros</exec_depend>
-  <exec_depend>pluginlib</exec_depend>
-  <exec_depend>roscpp</exec_depend>
 
-  <!-- The export tag contains other, unspecified, tags -->
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
   <export>
-    <!-- Other tools can request additional information be placed here -->
-    <nodelet plugin="${prefix}/nodelet.xml"/>
+    <build_type>ament_cmake</build_type>
   </export>
 </package>

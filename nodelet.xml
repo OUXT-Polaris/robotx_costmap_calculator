@@ -1,8 +1,0 @@
-<library path="lib/librobotx_costmap_calculator">
-  <class name="robotx_costmap_calculator/RobotxCostmapCalculator" 
-    type="robotx_costmap_calculator::RobotXCostmapCalculator" base_class_type="nodelet::Nodelet">
-    <description>
-        RobotxCostmapCalculator calculate costmap for Maritime RobotX Challenge
-    </description>
-  </class>
-</library>
