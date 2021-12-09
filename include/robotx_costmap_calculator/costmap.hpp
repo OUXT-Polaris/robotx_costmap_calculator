@@ -1,5 +1,5 @@
-#ifndef COSTMAP_CALCULATOR_HPP_
-#define COSTMAP_CALCULATOR_HPP_
+#ifndef COSTMAP_CALCULATOR_COSTMAP_HPP_
+#define COSTMAP_CALCULATOR_COSTMAP_HPP_
 
 
 #if __cplusplus
@@ -52,20 +52,14 @@ extern "C" {
 // Headers in STL
 #include <memory>
 
-namespace costmap_calculator
+namespace robotx_costmap_calculator
 {
-    class CostMap
+  class CostMap
     {
     public:
         CostMap(double resolution,int num_grids);
         ~CostMap();
         void overlayPointCloud(const sensor_msgs::msg::PointCloud2::SharedPtr cloud);
-        grid_map_msgs::msg::GridMap getGridMap()
-        {
-            grid_map_msgs::msg::GridMap grid_map;
-            grid_map::GridMapRosConverter::toMessage(map_,grid_map);
-            return grid_map;
-        }
     private:
         std::unique_ptr<BaseLayer> base_layer_ptr_;
         grid_map::GridMap map_;

@@ -52,7 +52,7 @@ extern "C" {
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
-namespace costmap_calculator
+namespace robotx_costmap_calculator
 {
 class CostmapCalculatorComponent : public rclcpp::Node
 {
@@ -63,7 +63,7 @@ private:
   rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr grid_map_pub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_sub_;
   void pointCloudCallback(const sensor_msgs::msg::PointCloud2::SharedPtr cloud);
-  std::unique_ptr<CostMap> costmap_ptr_;
+  std::unique_ptr<grid_map_msgs::msg::GridMap> costmap_ptr_;
   std::string points_raw_topic_;
   std::string output_topic_;
   double resolution_;

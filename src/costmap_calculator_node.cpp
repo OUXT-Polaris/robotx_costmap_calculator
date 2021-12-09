@@ -1,12 +1,11 @@
-#include <robot_costmap_calculator_component.hpp>
+#include <robotx_costmap_calculator/costmap_calculator_component.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <memory>
 
-int main(int argc, char **argv[])
+int main(int argc, char * argv[])
 {
     rclcpp::init(argc, argv);
     rclcpp::NodeOptions options;
-    auto component = std::make_shered<costmap_calculator::costmap_calculatorComponent>(options);
+    auto component = std::make_shared<robotx_costmap_calculator::CostmapCalculatorComponent>(options);
     rclcpp::spin(component);
     rclcpp::shutdown();
     return 0;

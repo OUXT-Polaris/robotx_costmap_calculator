@@ -1,8 +1,10 @@
 #include <robotx_costmap_calculator/base_layer.hpp>
+#include <memory>
+#include <string>
 
-namespace costmap_calculator
+namespace robotx_costmap_calculator
 {
-    BaseLayer::BaseLayer(double resolution,int num_grids)
+    BaseLayer::BaseLayer(double resolution,double num_grids)
     {
         resolution_ = resolution;
         num_grids_ = num_grids;

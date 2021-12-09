@@ -31,13 +31,16 @@ find_package(grid_map_core REQUIRED)
 find_package(grid_map_ros REQUIRED)
 find_package(pcl_apps_msgs REQUIRED)
 find_package(PCL REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 include_directories(
   include
   ${PCL_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIRS}
 )
 link_directories(
   ${PCL_LIBRARY_DIRS}
+  ${EIGEN3_INCLUDE_DIRS}
 )
 
 
@@ -63,7 +66,7 @@ ament_export_libraries(costmap_calculator_component)
 add_executable(costmap_calculator_node
   src/costmap_calculator_node.cpp
 )
-target_link_libraries(costmap_calculator_node costmap_calculator_component base_layer grid_costmap)
+target_link_libraries(costmap_calculator_node src/costmap_calculator_component src/base_layer src/costmap)
 ament_target_dependencies(costmap_calculator_node
   rclcpp
   rclcpp_components)
@@ -98,5 +101,6 @@ ament_export_dependencies(grid_map_msgs)
 ament_export_dependencies(grid_map_core)
 ament_export_dependencies(grid_map_ros)
 ament_export_dependencies(pcl_apps_msgs)
+ament_export_dependencies(Eigen3)
 ament_export_include_directories(include)
 ament_package()

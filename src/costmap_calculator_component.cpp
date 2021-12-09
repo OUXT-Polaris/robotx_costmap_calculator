@@ -1,9 +1,12 @@
 #include <robotx_costmap_calculator/costmap_calculator_component.hpp>
+#include <robotx_costmap_calculator/costmap.hpp>
+#include <memory>
+#include <string>
 
-namespace costmap_calculator
+namespace robotx_costmap_calculator
 {
 CostmapCalculatorComponent::CostmapCalculatorComponent(const rclcpp::NodeOptions &options)
-: Node("costmap_calculator",options)
+: Node("robotx_costmap_calculator",options)
 {
         std::string points_raw_topic;
         declare_parameter("points_raw_topic", "/points_raw");
@@ -12,18 +15,18 @@ CostmapCalculatorComponent::CostmapCalculatorComponent(const rclcpp::NodeOptions
         get_parameter("resolution",resolution_);
         declare_parameter("num_grids", 20.0);
         get_parameter("num_grids",num_grids_);
-        costmap_ptr_ = std::unique_ptr<CostMap>(new CostMap(resolution_,num_grids_));
         pointcloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(points_raw_topic, 10, 
             std::bind(&CostmapCalculatorComponent::pointCloudCallback, this,std::placeholders::_1));
         grid_map_pub_ = this->create_publisher<grid_map_msgs::msg::GridMap>("~/output_topic", 10);
     }
 
+
     void CostmapCalculatorComponent::pointCloudCallback(const sensor_msgs::msg::PointCloud2::SharedPtr cloud)
     {
-        costmap_ptr_->overlayPointCloud(cloud);
-        grid_map_msgs::msg::GridMap gridmap_msg;
-        gridmap_msg= costmap_ptr_->getGridMap();
-        grid_map_pub_->publish(gridmap_msg);
+        grid_map::GridMap map_;
+        std::unique_ptr<grid_map_msgs::msg::GridMap> outputMessage;
+        outputMessage = grid_map::GridMapRosConverter::toMessage(map_);
+        grid_map_pub_->publish(std::move(outputMessage));
         return;
     }
 }

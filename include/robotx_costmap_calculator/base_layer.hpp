@@ -52,12 +52,12 @@ extern "C" {
 #include <grid_map_core/GridMap.hpp>
 #include <grid_map_core/iterators/GridMapIterator.hpp>
 
-namespace costmap_calculator
+namespace robotx_costmap_calculator
 {
     class BaseLayer
     {
     public:
-        BaseLayer(double resolution,int num_grids);
+        BaseLayer(double resolution,double num_grids);
         ~BaseLayer();
         void overlayPointCloud(grid_map::GridMap& map,const sensor_msgs::msg::PointCloud2::SharedPtr cloud);
     private:

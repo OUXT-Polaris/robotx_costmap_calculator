@@ -1,6 +1,8 @@
 #include <robotx_costmap_calculator/costmap.hpp>
+#include <memory>
+#include <string>
 
-namespace costmap_calculator
+namespace robotx_costmap_calculator
 {
     CostMap::CostMap(double resolution,int num_grids)
     {
@@ -14,6 +16,7 @@ namespace costmap_calculator
 
     void CostMap::overlayPointCloud(const sensor_msgs::msg::PointCloud2::SharedPtr cloud)
     {   
+
         base_layer_ptr_->overlayPointCloud(map_,cloud);
         return;
     }
