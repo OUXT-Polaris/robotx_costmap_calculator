@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.5)
 project(robotx_costmap_calculator)
 
 #Default to C99
@@ -14,12 +14,13 @@ endif()
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
-
-
 # find dependencies
-find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_auto REQUIRED)
+find_package(grid_map_cmake_helpers REQUIRED)
+find_package(ament_cmake_core REQUIRED)
 ament_auto_find_build_dependencies()
+
+include(cmake/robotx_costmap_calculator-extras.cmake)
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
@@ -31,7 +32,20 @@ find_package(grid_map_core REQUIRED)
 find_package(grid_map_ros REQUIRED)
 find_package(pcl_apps_msgs REQUIRED)
 find_package(PCL REQUIRED)
-find_package(Eigen3 REQUIRED)
+
+find_package(grid_map_cmake_helpers REQUIRED)
+## Define Eigen addons.
+find_package(ament_cmake REQUIRED COMPONENTS
+  eigen_conversions
+)
+
+
+find_package(Eigen3 QUIET)
+if(NOT EIGEN3_FOUND)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(EIGEN3 REQUIRED eigen3)
+set(EIGEN3_INCLUDE_DIR ${EIGEN3_INCLUDE_DIRS})
+endif()
 
 include_directories(
   include
@@ -40,7 +54,7 @@ include_directories(
 )
 link_directories(
   ${PCL_LIBRARY_DIRS}
-  ${EIGEN3_INCLUDE_DIRS}
+  ${EIGEN3_LIBRARY_DIRS}
 )
 
 
@@ -89,10 +103,14 @@ install(
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
+  find_package(ament_lint_auto QUIET)
+    ament_lint_auto_find_test_dependencies()
 endif()
 
+find_package(ament_cmake_gtest REQUIRED)
 
+ament_lint_auto_find_test_dependencies()
+ament_export_include_directories(include)
 ament_export_dependencies(ament_cmake)
 ament_export_dependencies(rclcpp)
 ament_export_dependencies(rclcpp_components)
@@ -101,6 +119,10 @@ ament_export_dependencies(grid_map_msgs)
 ament_export_dependencies(grid_map_core)
 ament_export_dependencies(grid_map_ros)
 ament_export_dependencies(pcl_apps_msgs)
-ament_export_dependencies(Eigen3)
-ament_export_include_directories(include)
-ament_package()
+ament_export_dependencies(grid_map_cmake_helpers)
+
+ament_package(CONFIG_EXTRAS
+  cmake/robotx_costmap_calculator-extras.cmake
+)
+ament_register_extension("ament_package" "robotx_costmap_calculator"
+  "robotx_costmap_calculator-extras.cmake")
