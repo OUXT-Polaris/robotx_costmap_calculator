@@ -46,6 +46,8 @@ extern "C" {
 
 // HEaders in ROS
 #include <robotx_costmap_calculator/base_layer.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <pcl/filters/passthrough.h>
 #include <grid_map_msgs/msg/grid_map.hpp>
 #include <grid_map_core/GridMap.hpp>
 #include <grid_map_ros/grid_map_ros.hpp>
@@ -59,7 +61,6 @@ namespace robotx_costmap_calculator
     {
     public:
         CostMap(double resolution,int num_grids);
-        ~CostMap();
         void overlayPointCloud(const sensor_msgs::msg::PointCloud2::SharedPtr cloud);
     private:
         std::unique_ptr<BaseLayer> base_layer_ptr_;

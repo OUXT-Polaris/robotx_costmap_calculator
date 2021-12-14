@@ -44,13 +44,16 @@ extern "C" {
 #endif
 
 #include <robotx_costmap_calculator/costmap.hpp>
+#include <robotx_costmap_calculator/base_layer.hpp>
 
 // HEaders in ROS
 #include <pcl/filters/crop_hull.h>
 #include <pcl/PCLPointCloud2.h>
+#include <pcl/filters/passthrough.h>
 #include <grid_map_msgs/msg/grid_map.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <memory>
 
 namespace robotx_costmap_calculator
 {
@@ -63,7 +66,7 @@ private:
   rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr grid_map_pub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_sub_;
   void pointCloudCallback(const sensor_msgs::msg::PointCloud2::SharedPtr cloud);
-  std::unique_ptr<grid_map_msgs::msg::GridMap> costmap_ptr_;
+  std::unique_ptr<CostMap> costmap_ptr_;
   std::string points_raw_topic_;
   std::string output_topic_;
   double resolution_;

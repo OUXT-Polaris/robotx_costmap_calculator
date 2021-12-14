@@ -16,7 +16,7 @@ namespace robotx_costmap_calculator
 
     void CostMap::overlayPointCloud(const sensor_msgs::msg::PointCloud2::SharedPtr cloud)
     {   
-
+        
         base_layer_ptr_->overlayPointCloud(map_,cloud);
         return;
     }

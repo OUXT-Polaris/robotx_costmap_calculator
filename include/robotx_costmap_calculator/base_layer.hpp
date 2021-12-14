@@ -44,12 +44,11 @@ extern "C" {
 #endif
 
 
-
-#include <sensor_msgs/msg/point_cloud2.h>
+#include <sensor_msgs/msg/point_cloud2.hpp>
 #include <pcl/PCLPointCloud2.h>
+#include <pcl/filters/passthrough.h>
 #include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
-#include <pcl/filters/passthrough.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <grid_map_core/GridMap.hpp>
 #include <grid_map_core/iterators/GridMapIterator.hpp>
@@ -60,7 +59,6 @@ namespace robotx_costmap_calculator
     {
     public:
         BaseLayer(double resolution,double num_grids);
-        ~BaseLayer();
         void overlayPointCloud(grid_map::GridMap& map,const sensor_msgs::msg::PointCloud2::SharedPtr cloud);
     private:
         double resolution_;
