@@ -106,7 +106,7 @@ ament_target_dependencies(costmap_calculator_node
 
 install(TARGETS
   costmap_calculator_node
-  DESTINATION lib/costmap_calculator
+  DESTINATION lib/robotx_costmap_calculator
 )
 
 install(TARGETS costmap_calculator_component 
@@ -121,6 +121,10 @@ ament_export_libraries(costmap_calculator_component)
 install(
   DIRECTORY "include/"
   DESTINATION include
+)
+
+install(DIRECTORY launch
+  DESTINATION share/${PROJECT_NAME}
 )
 
 if(BUILD_TESTING)

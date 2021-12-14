@@ -62,6 +62,7 @@ namespace robotx_costmap_calculator
     public:
         CostMap(double resolution,int num_grids);
         void overlayPointCloud(const sensor_msgs::msg::PointCloud2::SharedPtr cloud);
+        
     private:
         std::unique_ptr<BaseLayer> base_layer_ptr_;
         grid_map::GridMap map_;

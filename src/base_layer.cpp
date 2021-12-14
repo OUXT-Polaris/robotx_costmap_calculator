@@ -18,12 +18,12 @@ namespace robotx_costmap_calculator
 
     void BaseLayer::overlayPointCloud(grid_map::GridMap& map,const sensor_msgs::msg::PointCloud2::SharedPtr cloud)
     {
-        pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_cloud(new pcl::PointCloud<pcl::PointXYZ>());
         pcl::fromROSMsg(*cloud, *pcl_cloud);
         grid_map::Matrix mat = map["base_layer"];
         for (grid_map::GridMapIterator iterator(map); !iterator.isPastEnd(); ++iterator)
         {   
-
+            int i = iterator.getLinearIndex();
             grid_map::Position position;
             map.getPosition(*iterator, position);
             double x_min = position.x() - (resolution_*0.5);
