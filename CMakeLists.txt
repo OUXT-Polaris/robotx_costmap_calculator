@@ -58,8 +58,6 @@ add_definitions(${PCL_DEFINITIONS})
 
 
 add_library(costmap_calculator_component SHARED
-  src/base_layer.cpp
-  src/costmap.cpp
   src/costmap_calculator_component.cpp
   )
 
@@ -110,8 +108,6 @@ install(TARGETS
 )
 
 install(TARGETS costmap_calculator_component 
-EXPORT export_base_layer
-EXPORT export_costmap
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
@@ -123,7 +119,7 @@ install(
   DESTINATION include
 )
 
-install(DIRECTORY launch
+install(DIRECTORY config launch
   DESTINATION share/${PROJECT_NAME}
 )
 
