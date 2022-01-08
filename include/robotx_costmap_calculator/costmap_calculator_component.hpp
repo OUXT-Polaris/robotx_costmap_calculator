@@ -1,6 +1,19 @@
+// Copyright (c) 2022 OUXT Polaris
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 #ifndef COSTMAP_CALCULATOR_COSTMAP_CALCULATOR_HPP_
 #define COSTMAP_CALCULATOR_COSTMAP_CALCULATOR_HPP_
-
 
 #if __cplusplus
 extern "C" {
@@ -27,10 +40,12 @@ extern "C" {
   COSTMAP_CALCULATOR_COSTMAP_CALCULATOR_COMPONENT_PUBLIC
 #define COSTMAP_CALCULATOR_COSTMAP_CALCULATOR_COMPONENT_LOCAL
 #else
-#define COSTMAP_CALCULATOR_COSTMAP_CALCULATOR_COMPONENT_EXPORT __attribute__((visibility("default")))
+#define COSTMAP_CALCULATOR_COSTMAP_CALCULATOR_COMPONENT_EXPORT \
+  __attribute__((visibility("default")))
 #define COSTMAP_CALCULATOR_COSTMAP_CALCULATOR_COMPONENT_IMPORT
 #if __GNUC__ >= 4
-#define COSTMAP_CALCULATOR_COSTMAP_CALCULATOR_COMPONENT_PUBLIC __attribute__((visibility("default")))
+#define COSTMAP_CALCULATOR_COSTMAP_CALCULATOR_COMPONENT_PUBLIC \
+  __attribute__((visibility("default")))
 #define COSTMAP_CALCULATOR_COSTMAP_CALCULATOR_COMPONENT_LOCAL __attribute__((visibility("hidden")))
 #else
 #define COSTMAP_CALCULATOR_COSTMAP_CALCULATOR_COMPONENT_PUBLIC
@@ -43,23 +58,23 @@ extern "C" {
 }  // extern "
 #endif
 
-
-
 // HEaders in ROS
-#include <grid_map_ros/grid_map_ros.hpp>
-
-#include <pcl/filters/crop_hull.h>
 #include <pcl/PCLPointCloud2.h>
+#include <pcl/filters/crop_hull.h>
 #include <pcl/filters/passthrough.h>
-#include <grid_map_msgs/msg/grid_map.hpp>
-#include <rclcpp/rclcpp.hpp>
-#include <sensor_msgs/msg/point_cloud2.hpp>
-#include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
+#include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
+
+#include <boost/optional.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
 #include <grid_map_core/GridMap.hpp>
 #include <grid_map_core/iterators/GridMapIterator.hpp>
+#include <grid_map_msgs/msg/grid_map.hpp>
+#include <grid_map_ros/grid_map_ros.hpp>
 #include <memory>
+#include <rclcpp/rclcpp.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
 
 namespace robotx_costmap_calculator
 {
@@ -68,15 +83,19 @@ class CostmapCalculatorComponent : public rclcpp::Node
 public:
   COSTMAP_CALCULATOR_COSTMAP_CALCULATOR_COMPONENT_PUBLIC
   explicit CostmapCalculatorComponent(const rclcpp::NodeOptions & options);
+
 private:
   rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr grid_map_pub_;
+  rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr current_pose_sub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_sub_;
   void pointCloudCallback(const sensor_msgs::msg::PointCloud2::SharedPtr cloud);
+  boost::optional<geometry_msgs::msg::PoseStamped> current_pose_;
+  void currentPoseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr data);
   std::string points_raw_topic_;
   std::string output_topic_;
   double resolution_;
   int num_grids_;
 };
-}
+}  // namespace robotx_costmap_calculator
 
 #endif  //ROBOTX_COSTMAP_CALCULATOR_COSTMAP_COMPONENT_HPP_

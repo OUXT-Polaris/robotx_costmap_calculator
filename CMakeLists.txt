@@ -21,25 +21,11 @@ include(cmake/robotx_costmap_calculator-extras.cmake)
 # find dependencies
 find_package(ament_cmake_auto REQUIRED)
 find_package(grid_map_cmake_helpers REQUIRED)
-find_package(ament_cmake_core REQUIRED)
 ament_auto_find_build_dependencies()
 
-
-
-# find dependencies
-find_package(ament_cmake REQUIRED)
-find_package(rclcpp REQUIRED)
-find_package(rclcpp_components REQUIRED)
-find_package(sensor_msgs REQUIRED)
-find_package(grid_map_msgs REQUIRED)
-find_package(grid_map_core REQUIRED)
-find_package(grid_map_ros REQUIRED)
-find_package(pcl_apps_msgs REQUIRED)
 find_package(pcl_conversions REQUIRED)
 find_package(PCL REQUIRED)
-
-
-
+find_package(Eigen3 REQUIRED)
 
 include_directories(
   include
@@ -70,7 +56,6 @@ ament_target_dependencies(costmap_calculator_component
   grid_map_msgs
   grid_map_core
   grid_map_ros
-  pcl_apps_msgs
   pcl_conversions
   PCL
   )
@@ -91,7 +76,6 @@ ament_target_dependencies(costmap_calculator_node
   grid_map_core
   grid_map_msgs
   grid_map_ros
-  pcl_apps_msgs
   pcl_conversions
   )
 
@@ -128,21 +112,5 @@ if(BUILD_TESTING)
     ament_lint_auto_find_test_dependencies()
 endif()
 
-
-
-ament_lint_auto_find_test_dependencies()
-ament_export_include_directories(include)
-ament_export_dependencies(ament_cmake)
-ament_export_dependencies(rclcpp)
-ament_export_dependencies(rclcpp_components)
-ament_export_dependencies(sensor_msgs)
-ament_export_dependencies(grid_map_msgs)
-ament_export_dependencies(grid_map_core)
-ament_export_dependencies(grid_map_ros)
-ament_export_dependencies(pcl_apps_msgs)
-ament_export_dependencies(pcl_conversions)
-ament_export_dependencies(PCL)
-
-
-ament_package()
+ament_auto_package()
 
