@@ -47,6 +47,7 @@ extern "C" {
 
 // HEaders in ROS
 #include <grid_map_ros/grid_map_ros.hpp>
+#include <boost/optional.hpp>
 
 #include <pcl/filters/crop_hull.h>
 #include <pcl/PCLPointCloud2.h>
@@ -54,6 +55,7 @@ extern "C" {
 #include <grid_map_msgs/msg/grid_map.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
 #include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl_conversions/pcl_conversions.h>
@@ -70,8 +72,11 @@ public:
   explicit CostmapCalculatorComponent(const rclcpp::NodeOptions & options);
 private:
   rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr grid_map_pub_;
+  rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr current_pose_sub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_sub_;
   void pointCloudCallback(const sensor_msgs::msg::PointCloud2::SharedPtr cloud);
+  boost::optional<geometry_msgs::msg::PoseStamped> current_pose_;
+  void currentPoseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr data);
   std::string points_raw_topic_;
   std::string output_topic_;
   double resolution_;

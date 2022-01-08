@@ -32,7 +32,7 @@ def generate_launch_description():
     )
     """
 
-        # Create the launch description and populate
+    # Create the launch description and populate
     ld = LaunchDescription()
 
     # Add launch arguments to the launch description
