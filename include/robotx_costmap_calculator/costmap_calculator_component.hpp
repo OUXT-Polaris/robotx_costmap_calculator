@@ -1,7 +1,6 @@
 #ifndef COSTMAP_CALCULATOR_COSTMAP_CALCULATOR_HPP_
 #define COSTMAP_CALCULATOR_COSTMAP_CALCULATOR_HPP_
 
-
 #if __cplusplus
 extern "C" {
 #endif
@@ -27,10 +26,12 @@ extern "C" {
   COSTMAP_CALCULATOR_COSTMAP_CALCULATOR_COMPONENT_PUBLIC
 #define COSTMAP_CALCULATOR_COSTMAP_CALCULATOR_COMPONENT_LOCAL
 #else
-#define COSTMAP_CALCULATOR_COSTMAP_CALCULATOR_COMPONENT_EXPORT __attribute__((visibility("default")))
+#define COSTMAP_CALCULATOR_COSTMAP_CALCULATOR_COMPONENT_EXPORT \
+  __attribute__((visibility("default")))
 #define COSTMAP_CALCULATOR_COSTMAP_CALCULATOR_COMPONENT_IMPORT
 #if __GNUC__ >= 4
-#define COSTMAP_CALCULATOR_COSTMAP_CALCULATOR_COMPONENT_PUBLIC __attribute__((visibility("default")))
+#define COSTMAP_CALCULATOR_COSTMAP_CALCULATOR_COMPONENT_PUBLIC \
+  __attribute__((visibility("default")))
 #define COSTMAP_CALCULATOR_COSTMAP_CALCULATOR_COMPONENT_LOCAL __attribute__((visibility("hidden")))
 #else
 #define COSTMAP_CALCULATOR_COSTMAP_CALCULATOR_COMPONENT_PUBLIC
@@ -43,25 +44,23 @@ extern "C" {
 }  // extern "
 #endif
 
-
-
 // HEaders in ROS
-#include <grid_map_ros/grid_map_ros.hpp>
-#include <boost/optional.hpp>
-
-#include <pcl/filters/crop_hull.h>
 #include <pcl/PCLPointCloud2.h>
+#include <pcl/filters/crop_hull.h>
 #include <pcl/filters/passthrough.h>
-#include <grid_map_msgs/msg/grid_map.hpp>
-#include <rclcpp/rclcpp.hpp>
-#include <sensor_msgs/msg/point_cloud2.hpp>
-#include <geometry_msgs/msg/pose_stamped.hpp>
-#include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
+#include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
+
+#include <boost/optional.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
 #include <grid_map_core/GridMap.hpp>
 #include <grid_map_core/iterators/GridMapIterator.hpp>
+#include <grid_map_msgs/msg/grid_map.hpp>
+#include <grid_map_ros/grid_map_ros.hpp>
 #include <memory>
+#include <rclcpp/rclcpp.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
 
 namespace robotx_costmap_calculator
 {
@@ -70,6 +69,7 @@ class CostmapCalculatorComponent : public rclcpp::Node
 public:
   COSTMAP_CALCULATOR_COSTMAP_CALCULATOR_COMPONENT_PUBLIC
   explicit CostmapCalculatorComponent(const rclcpp::NodeOptions & options);
+
 private:
   rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr grid_map_pub_;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr current_pose_sub_;
@@ -82,6 +82,6 @@ private:
   double resolution_;
   int num_grids_;
 };
-}
+}  // namespace robotx_costmap_calculator
 
 #endif  //ROBOTX_COSTMAP_CALCULATOR_COSTMAP_COMPONENT_HPP_
