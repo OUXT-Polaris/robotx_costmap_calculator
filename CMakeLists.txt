@@ -57,8 +57,9 @@ ament_target_dependencies(costmap_calculator_component
   grid_map_core
   grid_map_ros
   pcl_conversions
-  PCL
   )
+target_link_libraries(costmap_calculator_component
+ ${PCL_LIBRARIES})
 
 add_executable(costmap_calculator_node
   src/costmap_calculator_node.cpp
@@ -68,7 +69,7 @@ rclcpp_components_register_nodes(costmap_calculator_component
 
 
 target_link_libraries(costmap_calculator_node
- costmap_calculator_component ${PCL_LIBRARIES})
+ costmap_calculator_component)
 ament_target_dependencies(costmap_calculator_node
   rclcpp
   rclcpp_components
@@ -97,7 +98,7 @@ install(TARGETS costmap_calculator_component
   RUNTIME DESTINATION bin
   INCLUDES DESTINATION include)
 
-ament_export_libraries(costmap_calculator_component)
+#ament_export_libraries(costmap_calculator_component)
 install(
   DIRECTORY "include/"
   DESTINATION include
