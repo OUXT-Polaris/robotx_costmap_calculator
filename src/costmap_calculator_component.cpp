@@ -62,6 +62,7 @@ void CostmapCalculatorComponent::currentPoseCallback(
 void CostmapCalculatorComponent::pointCloudCallback(
   const sensor_msgs::msg::PointCloud2::SharedPtr cloud)
 {
+  
   pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_cloud(new pcl::PointCloud<pcl::PointXYZ>());
   pcl::fromROSMsg(*cloud, *pcl_cloud);
   grid_map::GridMap map({"base_layer"});
@@ -70,7 +71,8 @@ void CostmapCalculatorComponent::pointCloudCallback(
     grid_map::Length(resolution_ * num_grids_, resolution_ * num_grids_ * 0.5), resolution_);
   pcl::PassThrough<pcl::PointXYZ> pass;
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered(new pcl::PointCloud<pcl::PointXYZ>);
-  rclcpp::Time start = get_clock()->now();
+  rclcpp::Time start_time = get_clock()->now();
+  rclcpp::Duration duration(0.0);
   for (grid_map::GridMapIterator iterator(map); !iterator.isPastEnd(); ++iterator) {
     grid_map::Position position;
     map.getPosition(*iterator, position);
@@ -93,11 +95,12 @@ void CostmapCalculatorComponent::pointCloudCallback(
       map.at("base_layer", *iterator) = sigmoid(1.0, 0.0, (double)num_points);
     }
   }
-  rclcpp::Time finish = get_clock()->now();
-  std::cout << "coutによる出力\n";
+  rclcpp::Time finish_time = get_clock()->now();
+  duration =finish_time-start_time;
+  RCLCPP_INFO(get_logger(),"gridmap_time:%f",duration.seconds());
   auto outputMessage = grid_map::GridMapRosConverter::toMessage(map);
   grid_map_pub_->publish(std::move(outputMessage));
   return;
 }
-
 }  // namespace robotx_costmap_calculator
+RCLCPP_COMPONRNTS_REGISISTER_NODE(robotx_costmap_calculator::CostmapCalculatorComponent)

@@ -94,6 +94,7 @@ private:
   std::string points_raw_topic_;
   std::string output_topic_;
   double resolution_;
+  rclcpp::Time timestamp_;
   int num_grids_;
 };
 }  // namespace robotx_costmap_calculator

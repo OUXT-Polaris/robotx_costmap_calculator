@@ -64,7 +64,7 @@ add_executable(costmap_calculator_node
   src/costmap_calculator_node.cpp
 )
 rclcpp_components_register_nodes(costmap_calculator_component
- "costmap_calculator_component::CostmapCalculatorComponent")
+ "robotx_costmap_calculator::CostmapCalculatorComponent")
 
 
 target_link_libraries(costmap_calculator_node
