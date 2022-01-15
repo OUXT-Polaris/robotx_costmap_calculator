@@ -15,10 +15,10 @@
 #include <chrono>
 #include <grid_map_ros/GridMapRosConverter.hpp>
 #include <memory>
+#include <rclcpp_components/register_node_macro.hpp>
 #include <robotx_costmap_calculator/costmap_calculator_component.hpp>
 #include <string>
 #include <vector>
-#include <rclcpp_components/register_node_macro.hpp>
 
 namespace robotx_costmap_calculator
 {
@@ -63,7 +63,6 @@ void CostmapCalculatorComponent::currentPoseCallback(
 void CostmapCalculatorComponent::pointCloudCallback(
   const sensor_msgs::msg::PointCloud2::SharedPtr cloud)
 {
-  
   pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_cloud(new pcl::PointCloud<pcl::PointXYZ>());
   pcl::fromROSMsg(*cloud, *pcl_cloud);
   grid_map::GridMap map({"base_layer"});
@@ -97,8 +96,8 @@ void CostmapCalculatorComponent::pointCloudCallback(
     }
   }
   rclcpp::Time finish_time = get_clock()->now();
-  duration =finish_time-start_time;
-  RCLCPP_INFO(get_logger(),"gridmap_time:%f",duration.seconds());
+  duration = finish_time - start_time;
+  RCLCPP_INFO(get_logger(), "gridmap_time:%f", duration.seconds());
   auto outputMessage = grid_map::GridMapRosConverter::toMessage(map);
   grid_map_pub_->publish(std::move(outputMessage));
   return;
