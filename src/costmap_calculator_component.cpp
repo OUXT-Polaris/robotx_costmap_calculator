@@ -97,10 +97,10 @@ void CostmapCalculatorComponent::pointCloudCallback(
   }
   rclcpp::Time finish_time = get_clock()->now();
   duration =finish_time-start_time;
-  RCLCPP_INFO(get_logger(),"gridmap_time:%f",duration.nanoseconds());
+  RCLCPP_INFO(get_logger(),"gridmap_time:%f",duration.seconds());
   auto outputMessage = grid_map::GridMapRosConverter::toMessage(map);
   grid_map_pub_->publish(std::move(outputMessage));
   return;
 }
-
 }  // namespace robotx_costmap_calculator
+RCLCPP_COMPONRNTS_REGISISTER_NODE(robotx_costmap_calculator::CostmapCalculatorComponent)
