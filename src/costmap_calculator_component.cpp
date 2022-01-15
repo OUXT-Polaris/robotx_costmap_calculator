@@ -18,6 +18,7 @@
 #include <robotx_costmap_calculator/costmap_calculator_component.hpp>
 #include <string>
 #include <vector>
+#include <rclcpp_components/register_node_macro.hpp>
 
 namespace robotx_costmap_calculator
 {
@@ -103,4 +104,5 @@ void CostmapCalculatorComponent::pointCloudCallback(
   return;
 }
 }  // namespace robotx_costmap_calculator
-RCLCPP_COMPONRNTS_REGISISTER_NODE(robotx_costmap_calculator::CostmapCalculatorComponent)
+
+RCLCPP_COMPONENTS_REGISTER_NODE(robotx_costmap_calculator::CostmapCalculatorComponent)
