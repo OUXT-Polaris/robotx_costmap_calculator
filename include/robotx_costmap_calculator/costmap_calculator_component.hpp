@@ -67,6 +67,8 @@ extern "C" {
 #include <pcl_conversions/pcl_conversions.h>
 
 #include <boost/optional.hpp>
+#include <boost/circular_buffer.hpp>
+
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <grid_map_core/GridMap.hpp>
 #include <grid_map_core/iterators/GridMapIterator.hpp>
@@ -75,6 +77,8 @@ extern "C" {
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <sensor_msgs/msg/laser_scan.hpp>
+
 
 namespace robotx_costmap_calculator
 {
@@ -86,12 +90,13 @@ public:
 
 private:
   rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr grid_map_pub_;
-  rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr current_pose_sub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_sub_;
+  rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr laserscan_sub_;
   void pointCloudCallback(const sensor_msgs::msg::PointCloud2::SharedPtr cloud);
-  boost::optional<geometry_msgs::msg::PoseStamped> current_pose_;
-  void currentPoseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr data);
+  void scanCallback(const sensor_msgs::msg::LaserScan::SharedPtr data);
+  boost::circular_buffer<grid_map::GridMap> map_data_;
   std::string points_raw_topic_;
+  std::string laserscan_raw_topic_;
   std::string output_topic_;
   double resolution_;
   rclcpp::Time timestamp_;
