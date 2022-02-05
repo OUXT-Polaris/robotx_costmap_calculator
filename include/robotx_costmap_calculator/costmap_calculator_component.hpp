@@ -69,6 +69,9 @@ extern "C" {
 #include <boost/optional.hpp>
 #include <boost/circular_buffer.hpp>
 
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <grid_map_core/GridMap.hpp>
 #include <grid_map_core/iterators/GridMapIterator.hpp>
@@ -93,7 +96,7 @@ private:
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_sub_;
   rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr laserscan_sub_;
   void pointCloudCallback(const sensor_msgs::msg::PointCloud2::SharedPtr cloud);
-  void scanCallback(const sensor_msgs::msg::LaserScan::SharedPtr data);
+  void scanCallback(const sensor_msgs::msg::LaserScan::SharedPtr scan);
   boost::circular_buffer<grid_map::GridMap> map_data_;
   std::string points_raw_topic_;
   std::string laserscan_raw_topic_;
@@ -101,6 +104,8 @@ private:
   double resolution_;
   rclcpp::Time timestamp_;
   int num_grids_;
+  double range_max_;
+  cv::Mat laser_image;
 };
 }  // namespace robotx_costmap_calculator
 

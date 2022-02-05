@@ -17,8 +17,11 @@
 #include <memory>
 #include <rclcpp_components/register_node_macro.hpp>
 #include <robotx_costmap_calculator/costmap_calculator_component.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
 #include <string>
 #include <vector>
+#include <stdio.h>
 
 namespace robotx_costmap_calculator
 {
@@ -35,6 +38,8 @@ CostmapCalculatorComponent::CostmapCalculatorComponent(const rclcpp::NodeOptions
   get_parameter("resolution", resolution_);
   declare_parameter("num_grids", 20);
   get_parameter("num_grids", num_grids_);
+  declare_parameter("range_max", 100.0);
+  get_parameter("range_max", range_max_);
 
   grid_map::GridMap map;
   pointcloud_sub_ = create_subscription<sensor_msgs::msg::PointCloud2>(
@@ -105,21 +110,27 @@ void CostmapCalculatorComponent::pointCloudCallback(
 }
 
 void CostmapCalculatorComponent::scanCallback(
-  const sensor_msgs::msg::LaserScan::SharedPtr data)
+  const sensor_msgs::msg::LaserScan::SharedPtr scan)
 {
-  grid_map::GridMap map;
-  map.add("laser_base_layer", 0.0);
-  map.setFrameId("base_link");
-  map.setGeometry(
-    grid_map::Length(resolution_ * num_grids_, resolution_ * num_grids_ * 0.5), resolution_);
-  for (grid_map::GridMapIterator iterator(map); !iterator.isPastEnd(); ++iterator) {
-    grid_map::Position position;
-    map.getPosition(*iterator, position);
-    double laser_x_min = position.x() - (resolution_ * 0.5);
-    double laser_x_max = position.x() + (resolution_ * 0.5);
-    double laser_y_min = position.y() - (resolution_ * 0.25);
-    double laser_y_max = position.y() + (resolution_ * 0.25);
+  laser_image = cv::Mat::zeros(cv::Size(400, 400), CV_8U);
+  for (int i=0; i < static_cast<int>(scan->ranges.size());i++){
+    if(range_max_ >=scan->ranges[i]){
+      double theta =scan->angle_min +scan->angle_increment *static_cast<double>(i);
+      int image_x=10*scan->ranges[i]*std::cos(theta);
+      int image_y=10*scan->ranges[i]*std::sin(theta);
+      if(image_x<400 &&10<image_x){
+        if(image_y<400 &&10<image_y){
+          int x=image_x;
+          int y=image_y;
+          laser_image.at<unsigned char>(y,x)=255;
+        }
+      } 
+    }
   }
+  cv::namedWindow("laser_image", cv::WINDOW_AUTOSIZE);
+  cv::imshow("laser_image",laser_image);
+  cv::waitKey(0);
+  cv::destroyWindow("laser_image");
   return;
 }
 }  // namespace robotx_costmap_calculator
