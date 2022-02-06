@@ -81,6 +81,8 @@ extern "C" {
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sensor_msgs/msg/laser_scan.hpp>
+#include <sensor_msgs/msg/image.hpp>
+#include <cv_bridge/cv_bridge.h>
 
 
 namespace robotx_costmap_calculator
@@ -93,6 +95,7 @@ public:
 
 private:
   rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr grid_map_pub_;
+  rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr image_pub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_sub_;
   rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr laserscan_sub_;
   void pointCloudCallback(const sensor_msgs::msg::PointCloud2::SharedPtr cloud);
@@ -106,6 +109,10 @@ private:
   int num_grids_;
   double range_max_;
   cv::Mat laser_image;
+  std_msgs::msg::Header header;
+  sensor_msgs::msg::Image img_msg;
+  cv_bridge::CvImage img_bridge;
+  std::string visualize_frame_id_;
 };
 }  // namespace robotx_costmap_calculator
 

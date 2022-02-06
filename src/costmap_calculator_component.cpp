@@ -21,7 +21,6 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <string>
 #include <vector>
-#include <stdio.h>
 
 namespace robotx_costmap_calculator
 {
@@ -40,6 +39,8 @@ CostmapCalculatorComponent::CostmapCalculatorComponent(const rclcpp::NodeOptions
   get_parameter("num_grids", num_grids_);
   declare_parameter("range_max", 100.0);
   get_parameter("range_max", range_max_);
+  declare_parameter("visualize_frame_id", "map");
+  get_parameter("visualize_frame_id", visualize_frame_id_);
 
   grid_map::GridMap map;
   pointcloud_sub_ = create_subscription<sensor_msgs::msg::PointCloud2>(
@@ -50,9 +51,11 @@ CostmapCalculatorComponent::CostmapCalculatorComponent(const rclcpp::NodeOptions
     laserscan_raw_topic, 10,
     std::bind(&CostmapCalculatorComponent::scanCallback, this, std::placeholders::_1));
     
-  grid_map_pub_ = create_publisher<grid_map_msgs::msg::GridMap>("grid_map", 10);
+  grid_map_pub_ = create_publisher<grid_map_msgs::msg::GridMap>("grid_map", 1);
+  image_pub_ =create_publisher<sensor_msgs::msg::Image>("laser_image",10);
 
   map_data_=boost::circular_buffer<grid_map::GridMap>(2);
+  cv::namedWindow("laser_image", cv::WINDOW_AUTOSIZE);
 }
 
 double sigmoid(double a, double b, double x)
@@ -127,10 +130,10 @@ void CostmapCalculatorComponent::scanCallback(
       } 
     }
   }
-  cv::namedWindow("laser_image", cv::WINDOW_AUTOSIZE);
-  cv::imshow("laser_image",laser_image);
-  cv::waitKey(0);
-  cv::destroyWindow("laser_image");
+  header.frame_id=visualize_frame_id_;
+  img_bridge = cv_bridge::CvImage(header, "mono8", laser_image);
+  img_bridge.toImageMsg(img_msg);
+  image_pub_->publish(img_msg);
   return;
 }
 }  // namespace robotx_costmap_calculator
