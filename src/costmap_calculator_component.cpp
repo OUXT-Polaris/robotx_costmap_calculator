@@ -21,6 +21,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <string>
 #include <vector>
+#include <grid_map_cv/GridMapCvConverter.hpp>
 
 namespace robotx_costmap_calculator
 {
@@ -115,25 +116,35 @@ void CostmapCalculatorComponent::pointCloudCallback(
 void CostmapCalculatorComponent::scanCallback(
   const sensor_msgs::msg::LaserScan::SharedPtr scan)
 {
-  laser_image = cv::Mat::zeros(cv::Size(400, 400), CV_8U);
+  grid_map::GridMap map;
+  map.add("laser_layer", 0.0);
+  map.setFrameId("base_link");
+  map.setGeometry(
+    grid_map::Length(resolution_ * num_grids_, resolution_ * num_grids_), resolution_);
+  laser_image = cv::Mat::zeros(cv::Size(20, 20), CV_8U);
   for (int i=0; i < static_cast<int>(scan->ranges.size());i++){
     if(range_max_ >=scan->ranges[i]){
       double theta =scan->angle_min +scan->angle_increment *static_cast<double>(i);
-      int image_x=10*scan->ranges[i]*std::cos(theta);
-      int image_y=10*scan->ranges[i]*std::sin(theta);
-      if(image_x<400 &&10<image_x){
-        if(image_y<400 &&10<image_y){
-          int x=image_x;
-          int y=image_y;
+      int image_x=scan->ranges[i]*std::cos(theta);
+      int image_y=scan->ranges[i]*std::sin(theta);
+      if(image_x<20 &&1<image_x){
+        if(image_y<20 &&1<image_y){
+          int x=image_x+5;
+          int y=image_y+5;
           laser_image.at<unsigned char>(y,x)=255;
         }
       } 
     }
   }
+  grid_map::GridMapCvConverter::addLayerFromImage<uint16_t, 1>(
+    laser_image, "laser_layer", map, 0.0,
+    0.3, 0.3);  
   header.frame_id=visualize_frame_id_;
   img_bridge = cv_bridge::CvImage(header, "mono8", laser_image);
   img_bridge.toImageMsg(img_msg);
   image_pub_->publish(img_msg);
+  auto message = grid_map::GridMapRosConverter::toMessage(map);
+  grid_map_pub_->publish(std::move(message));  
   return;
 }
 }  // namespace robotx_costmap_calculator
