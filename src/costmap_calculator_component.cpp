@@ -38,7 +38,11 @@ CostmapCalculatorComponent::CostmapCalculatorComponent(const rclcpp::NodeOptions
   get_parameter("resolution", resolution_);
   declare_parameter("num_grids", 20);
   get_parameter("num_grids", num_grids_);
-  declare_parameter("range_max", 100.0);
+  declare_parameter("laser_resolution",0.1);
+  get_parameter("laser_resolution", laser_resolution_);
+  declare_parameter("laser_num_grids", 200);
+  get_parameter("laser_num_grids", laser_num_grids_);
+  declare_parameter("range_max", 20.0);
   get_parameter("range_max", range_max_);
   declare_parameter("visualize_frame_id", "map");
   get_parameter("visualize_frame_id", visualize_frame_id_);
@@ -69,6 +73,7 @@ double sigmoid(double a, double b, double x)
 void CostmapCalculatorComponent::pointCloudCallback(
   const sensor_msgs::msg::PointCloud2::SharedPtr cloud)
 { 
+  /*
   grid_map::GridMap map;
   pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_cloud(new pcl::PointCloud<pcl::PointXYZ>());
   pcl::fromROSMsg(*cloud, *pcl_cloud);
@@ -107,44 +112,70 @@ void CostmapCalculatorComponent::pointCloudCallback(
   map_data_.push_back(map);
   map["past_layer"]=map_data_[0].get("base_layer");
   duration = finish_time - start_time;
-  RCLCPP_INFO(get_logger(), "gridmap_time:%f", duration.seconds());
+  //RCLCPP_INFO(get_logger(), "gridmap_time:%f", duration.seconds());
   auto outputMessage = grid_map::GridMapRosConverter::toMessage(map);
-  grid_map_pub_->publish(std::move(outputMessage));
+  //grid_map_pub_->publish(std::move(outputMessage));
+  */
   return;
 }
 
 void CostmapCalculatorComponent::scanCallback(
   const sensor_msgs::msg::LaserScan::SharedPtr scan)
 {
+
+  std::cout<<__FILE__<<","<<__LINE__<<std::endl;
   grid_map::GridMap map;
-  map.add("laser_layer", 0.0);
+  map.add("laser_layer",0.0);
   map.setFrameId("base_link");
   map.setGeometry(
-    grid_map::Length(resolution_ * num_grids_, resolution_ * num_grids_), resolution_);
-  laser_image = cv::Mat::zeros(cv::Size(20, 20), CV_8U);
+    grid_map::Length(laser_resolution_ * laser_num_grids_, laser_resolution_ * laser_num_grids_), laser_resolution_);
   for (int i=0; i < static_cast<int>(scan->ranges.size());i++){
     if(range_max_ >=scan->ranges[i]){
       double theta =scan->angle_min +scan->angle_increment *static_cast<double>(i);
-      int image_x=scan->ranges[i]*std::cos(theta);
-      int image_y=scan->ranges[i]*std::sin(theta);
-      if(image_x<20 &&1<image_x){
-        if(image_y<20 &&1<image_y){
-          int x=image_x+5;
-          int y=image_y+5;
+      double scan_x=scan->ranges[i]*std::cos(theta);
+      double scan_y=scan->ranges[i]*std::sin(theta);
+      for (grid_map::CircleIterator iterator(map,grid_map::Position(scan_x,scan_y),1.0); !iterator.isPastEnd(); ++iterator) {
+          map.at("laser_layer",*iterator)=1.0;
+          std::cout<<__FILE__<<","<<__LINE__<<std::endl;
+      }
+    }
+  }
+
+
+  /*
+  map.clearAll();  
+  map.setFrameId("base_link");
+  laser_image = cv::Mat::zeros(cv::Size(20,20), CV_8U);
+  for (int i=0; i < static_cast<int>(scan->ranges.size());i++){
+    if(range_max_ >=scan->ranges[i]){
+      double theta =scan->angle_min +scan->angle_increment *static_cast<double>(i);
+      RCLCPP_INFO(get_logger(), "theta:%f",theta);
+      double scan_x=scan->ranges[i]*std::cos(theta);
+      double scan_y=scan->ranges[i]*std::sin(theta);
+      RCLCPP_INFO(get_logger(), "scan_x[%d]:%f,scan_y[%d]:%f",i,scan_x,i,scan_y);
+      int x=-std::round(scan_y)+10;
+      int y=-std::round(scan_x)+10;
+      if(x<20 &&0<x){
+        if(y<20 &&0<y){
           laser_image.at<unsigned char>(y,x)=255;
+          //laser_image.at<int>(5,0)=255;
         }
       } 
     }
   }
+  grid_map::GridMapCvConverter::initializeFromImage(laser_image,laser_resolution_,map,grid_map::Position::Zero());
   grid_map::GridMapCvConverter::addLayerFromImage<uint16_t, 1>(
     laser_image, "laser_layer", map, 0.0,
-    0.3, 0.3);  
-  header.frame_id=visualize_frame_id_;
+    1.0, 0.5);
+  */
+  /*
   img_bridge = cv_bridge::CvImage(header, "mono8", laser_image);
   img_bridge.toImageMsg(img_msg);
   image_pub_->publish(img_msg);
+  */
   auto message = grid_map::GridMapRosConverter::toMessage(map);
-  grid_map_pub_->publish(std::move(message));  
+  grid_map_pub_->publish(std::move(message));
+  map.clearAll();  
   return;
 }
 }  // namespace robotx_costmap_calculator

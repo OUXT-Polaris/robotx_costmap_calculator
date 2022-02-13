@@ -105,8 +105,10 @@ private:
   std::string laserscan_raw_topic_;
   std::string output_topic_;
   double resolution_;
+  double laser_resolution_;
   rclcpp::Time timestamp_;
   int num_grids_;
+  int laser_num_grids_;
   double range_max_;
   cv::Mat laser_image;
   std_msgs::msg::Header header;
