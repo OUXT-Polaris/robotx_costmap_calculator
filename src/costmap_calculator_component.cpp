@@ -57,10 +57,8 @@ CostmapCalculatorComponent::CostmapCalculatorComponent(const rclcpp::NodeOptions
     std::bind(&CostmapCalculatorComponent::scanCallback, this, std::placeholders::_1));
     
   grid_map_pub_ = create_publisher<grid_map_msgs::msg::GridMap>("grid_map", 1);
-  image_pub_ =create_publisher<sensor_msgs::msg::Image>("laser_image",10);
 
   map_data_=boost::circular_buffer<grid_map::GridMap>(2);
-  cv::namedWindow("laser_image", cv::WINDOW_AUTOSIZE);
 }
 
 double sigmoid(double a, double b, double x)
@@ -77,8 +75,8 @@ void CostmapCalculatorComponent::pointCloudCallback(
   grid_map::GridMap map;
   pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_cloud(new pcl::PointCloud<pcl::PointXYZ>());
   pcl::fromROSMsg(*cloud, *pcl_cloud);
-  map.add("base_layer", 0.0);
-  map.add("past_layer", 0.0);
+  map.add("point_layer", 0.0);
+  map.add("point_past_layer", 0.0);
   map.setFrameId("base_link");
   map.setGeometry(
     grid_map::Length(resolution_ * num_grids_, resolution_ * num_grids_ * 0.5), resolution_);
@@ -91,8 +89,8 @@ void CostmapCalculatorComponent::pointCloudCallback(
     map.getPosition(*iterator, position);
     double x_min = position.x() - (resolution_ * 0.5);
     double x_max = position.x() + (resolution_ * 0.5);
-    double y_min = position.y() - (resolution_ * 0.25);
-    double y_max = position.y() + (resolution_ * 0.25);
+    double y_min = position.y() - (resolution_ * 0.5);
+    double y_max = position.y() + (resolution_ * 0.5);
     pass.setInputCloud(pcl_cloud);
     pass.setFilterFieldName("x");
     pass.setFilterLimits(x_min, x_max);
@@ -103,29 +101,31 @@ void CostmapCalculatorComponent::pointCloudCallback(
     pass.filter(*cloud_filtered);
     int num_points = cloud_filtered->size();
     if (num_points == 0) {
-      map.at("base_layer", *iterator) = 0.0;
+      map.at("point_layer", *iterator) = 0.0;
     } else {
-      map.at("base_layer", *iterator) = sigmoid(1.0, 0.0, (double)num_points);
+      map.at("point_layer", *iterator) = sigmoid(1.0, 0.0, (double)num_points);
     }
   }
   rclcpp::Time finish_time = get_clock()->now();
   map_data_.push_back(map);
-  map["past_layer"]=map_data_[0].get("base_layer");
+  map["point_past_layer"]=map_data_[0].get("point_layer");
   duration = finish_time - start_time;
   //RCLCPP_INFO(get_logger(), "gridmap_time:%f", duration.seconds());
   auto outputMessage = grid_map::GridMapRosConverter::toMessage(map);
   //grid_map_pub_->publish(std::move(outputMessage));
-  */
   return;
+  */
 }
 
 void CostmapCalculatorComponent::scanCallback(
   const sensor_msgs::msg::LaserScan::SharedPtr scan)
 {
 
-  std::cout<<__FILE__<<","<<__LINE__<<std::endl;
+  //std::cout<<__FILE__<<","<<__LINE__<<std::endl;
   grid_map::GridMap map;
   map.add("laser_layer",0.0);
+  map.add("laser_sum_layer",0.0);
+  map.add("laser_past_layer",0.0);
   map.setFrameId("base_link");
   map.setGeometry(
     grid_map::Length(laser_resolution_ * laser_num_grids_, laser_resolution_ * laser_num_grids_), laser_resolution_);
@@ -134,14 +134,19 @@ void CostmapCalculatorComponent::scanCallback(
       double theta =scan->angle_min +scan->angle_increment *static_cast<double>(i);
       double scan_x=scan->ranges[i]*std::cos(theta);
       double scan_y=scan->ranges[i]*std::sin(theta);
-      for (grid_map::CircleIterator iterator(map,grid_map::Position(scan_x,scan_y),1.0); !iterator.isPastEnd(); ++iterator) {
-          map.at("laser_layer",*iterator)=1.0;
-          std::cout<<__FILE__<<","<<__LINE__<<std::endl;
+      for (grid_map::CircleIterator iterator(map,grid_map::Position(scan_x,scan_y),0.5); !iterator.isPastEnd(); ++iterator) {
+        if(std::isnan(map.at("laser_layer",*iterator))){
+          map.at("laser_layer",*iterator)=0.1;
+        }
+        else{
+          map.at("laser_layer",*iterator)=map.at("laser_layer",*iterator)+0.1;
+        }
       }
     }
   }
-
-
+  map_data_.push_back(map);
+  map["laser_past_layer"]=map_data_[0].get("laser_layer");
+  //map["laser_sum_layer"]=map["laser_layer"]+0.5*map["laser_past_layer"];
   /*
   map.clearAll();  
   map.setFrameId("base_link");
