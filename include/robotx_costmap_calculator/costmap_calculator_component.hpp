@@ -59,6 +59,7 @@ extern "C" {
 #endif
 
 // HEaders in ROS
+#include <cv_bridge/cv_bridge.h>
 #include <pcl/PCLPointCloud2.h>
 #include <pcl/filters/crop_hull.h>
 #include <pcl/filters/passthrough.h>
@@ -66,24 +67,20 @@ extern "C" {
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
 
-#include <boost/optional.hpp>
 #include <boost/circular_buffer.hpp>
-
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-
+#include <boost/optional.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <grid_map_core/GridMap.hpp>
 #include <grid_map_core/iterators/GridMapIterator.hpp>
 #include <grid_map_msgs/msg/grid_map.hpp>
 #include <grid_map_ros/grid_map_ros.hpp>
 #include <memory>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <sensor_msgs/msg/point_cloud2.hpp>
-#include <sensor_msgs/msg/laser_scan.hpp>
 #include <sensor_msgs/msg/image.hpp>
-#include <cv_bridge/cv_bridge.h>
-
+#include <sensor_msgs/msg/laser_scan.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
 
 namespace robotx_costmap_calculator
 {

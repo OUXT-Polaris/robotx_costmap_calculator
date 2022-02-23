@@ -13,15 +13,15 @@
 // limitations under the License.
 
 #include <chrono>
+#include <grid_map_cv/GridMapCvConverter.hpp>
 #include <grid_map_ros/GridMapRosConverter.hpp>
 #include <memory>
-#include <rclcpp_components/register_node_macro.hpp>
-#include <robotx_costmap_calculator/costmap_calculator_component.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <rclcpp_components/register_node_macro.hpp>
+#include <robotx_costmap_calculator/costmap_calculator_component.hpp>
 #include <string>
 #include <vector>
-#include <grid_map_cv/GridMapCvConverter.hpp>
 
 namespace robotx_costmap_calculator
 {
@@ -32,13 +32,14 @@ CostmapCalculatorComponent::CostmapCalculatorComponent(const rclcpp::NodeOptions
   std::string laserscan_raw_topic;
   declare_parameter<std::string>("points_raw_topic", "/perception/points_concatenate_node/output");
   get_parameter("points_raw_topic", points_raw_topic);
-  declare_parameter<std::string>("laserscan_raw_topic", "/perception/pointcloud_to_laserscan_node/output");
+  declare_parameter<std::string>(
+    "laserscan_raw_topic", "/perception/pointcloud_to_laserscan_node/output");
   get_parameter("laserscan_raw_topic", laserscan_raw_topic);
   declare_parameter("resolution", 1.0);
   get_parameter("resolution", resolution_);
   declare_parameter("num_grids", 20);
   get_parameter("num_grids", num_grids_);
-  declare_parameter("laser_resolution",0.1);
+  declare_parameter("laser_resolution", 0.1);
   get_parameter("laser_resolution", laser_resolution_);
   declare_parameter("laser_num_grids", 200);
   get_parameter("laser_num_grids", laser_num_grids_);
@@ -55,10 +56,10 @@ CostmapCalculatorComponent::CostmapCalculatorComponent(const rclcpp::NodeOptions
   laserscan_sub_ = create_subscription<sensor_msgs::msg::LaserScan>(
     laserscan_raw_topic, 10,
     std::bind(&CostmapCalculatorComponent::scanCallback, this, std::placeholders::_1));
-    
+
   grid_map_pub_ = create_publisher<grid_map_msgs::msg::GridMap>("grid_map", 1);
 
-  map_data_=boost::circular_buffer<grid_map::GridMap>(2);
+  map_data_ = boost::circular_buffer<grid_map::GridMap>(2);
 }
 
 double sigmoid(double a, double b, double x)
@@ -70,7 +71,7 @@ double sigmoid(double a, double b, double x)
 
 void CostmapCalculatorComponent::pointCloudCallback(
   const sensor_msgs::msg::PointCloud2::SharedPtr cloud)
-{ 
+{
   /*
   grid_map::GridMap map;
   pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_cloud(new pcl::PointCloud<pcl::PointXYZ>());
@@ -117,36 +118,35 @@ void CostmapCalculatorComponent::pointCloudCallback(
   */
 }
 
-void CostmapCalculatorComponent::scanCallback(
-  const sensor_msgs::msg::LaserScan::SharedPtr scan)
+void CostmapCalculatorComponent::scanCallback(const sensor_msgs::msg::LaserScan::SharedPtr scan)
 {
-
   //std::cout<<__FILE__<<","<<__LINE__<<std::endl;
   grid_map::GridMap map;
-  map.add("laser_layer",0.0);
-  map.add("laser_sum_layer",0.0);
-  map.add("laser_past_layer",0.0);
+  map.add("laser_layer", 0.0);
+  map.add("laser_sum_layer", 0.0);
+  map.add("laser_past_layer", 0.0);
   map.setFrameId("base_link");
   map.setGeometry(
-    grid_map::Length(laser_resolution_ * laser_num_grids_, laser_resolution_ * laser_num_grids_), laser_resolution_);
-  for (int i=0; i < static_cast<int>(scan->ranges.size());i++){
-    if(range_max_ >=scan->ranges[i]){
-      double theta =scan->angle_min +scan->angle_increment *static_cast<double>(i);
-      double scan_x=scan->ranges[i]*std::cos(theta);
-      double scan_y=scan->ranges[i]*std::sin(theta);
-      for (grid_map::CircleIterator iterator(map,grid_map::Position(scan_x,scan_y),0.5); !iterator.isPastEnd(); ++iterator) {
-        if(std::isnan(map.at("laser_layer",*iterator))){
-          map.at("laser_layer",*iterator)=0.1;
-        }
-        else{
-          map.at("laser_layer",*iterator)=map.at("laser_layer",*iterator)+0.1;
+    grid_map::Length(laser_resolution_ * laser_num_grids_, laser_resolution_ * laser_num_grids_),
+    laser_resolution_);
+  for (int i = 0; i < static_cast<int>(scan->ranges.size()); i++) {
+    if (range_max_ >= scan->ranges[i]) {
+      double theta = scan->angle_min + scan->angle_increment * static_cast<double>(i);
+      double scan_x = scan->ranges[i] * std::cos(theta);
+      double scan_y = scan->ranges[i] * std::sin(theta);
+      for (grid_map::CircleIterator iterator(map, grid_map::Position(scan_x, scan_y), 0.5);
+           !iterator.isPastEnd(); ++iterator) {
+        if (std::isnan(map.at("laser_layer", *iterator))) {
+          map.at("laser_layer", *iterator) = 0.1;
+        } else {
+          map.at("laser_layer", *iterator) = map.at("laser_layer", *iterator) + 0.1;
         }
       }
     }
   }
   map_data_.push_back(map);
-  map["laser_past_layer"]=map_data_[0].get("laser_layer");
-  //map["laser_sum_layer"]=map["laser_layer"]+0.5*map["laser_past_layer"];
+  map["laser_past_layer"] = map_data_[0].get("laser_layer");
+  map["laser_sum_layer"] = map["laser_layer"] + 0.5 * map["laser_past_layer"];
   /*
   map.clearAll();  
   map.setFrameId("base_link");
@@ -180,7 +180,7 @@ void CostmapCalculatorComponent::scanCallback(
   */
   auto message = grid_map::GridMapRosConverter::toMessage(map);
   grid_map_pub_->publish(std::move(message));
-  map.clearAll();  
+  map.clearAll();
   return;
 }
 }  // namespace robotx_costmap_calculator
