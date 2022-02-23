@@ -59,6 +59,7 @@ extern "C" {
 #endif
 
 // HEaders in ROS
+#include <cv_bridge/cv_bridge.h>
 #include <pcl/PCLPointCloud2.h>
 #include <pcl/filters/crop_hull.h>
 #include <pcl/filters/passthrough.h>
@@ -66,6 +67,7 @@ extern "C" {
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
 
+#include <boost/circular_buffer.hpp>
 #include <boost/optional.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <grid_map_core/GridMap.hpp>
@@ -73,7 +75,11 @@ extern "C" {
 #include <grid_map_msgs/msg/grid_map.hpp>
 #include <grid_map_ros/grid_map_ros.hpp>
 #include <memory>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <sensor_msgs/msg/image.hpp>
+#include <sensor_msgs/msg/laser_scan.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
 namespace robotx_costmap_calculator
@@ -86,16 +92,26 @@ public:
 
 private:
   rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr grid_map_pub_;
-  rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr current_pose_sub_;
+  rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr image_pub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_sub_;
+  rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr laserscan_sub_;
   void pointCloudCallback(const sensor_msgs::msg::PointCloud2::SharedPtr cloud);
-  boost::optional<geometry_msgs::msg::PoseStamped> current_pose_;
-  void currentPoseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr data);
+  void scanCallback(const sensor_msgs::msg::LaserScan::SharedPtr scan);
+  boost::circular_buffer<grid_map::GridMap> map_data_;
   std::string points_raw_topic_;
+  std::string laserscan_raw_topic_;
   std::string output_topic_;
   double resolution_;
+  double laser_resolution_;
   rclcpp::Time timestamp_;
   int num_grids_;
+  int laser_num_grids_;
+  double range_max_;
+  cv::Mat laser_image;
+  std_msgs::msg::Header header;
+  sensor_msgs::msg::Image img_msg;
+  cv_bridge::CvImage img_bridge;
+  std::string visualize_frame_id_;
 };
 }  // namespace robotx_costmap_calculator
 
