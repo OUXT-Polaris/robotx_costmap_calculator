@@ -69,7 +69,9 @@ extern "C" {
 
 #include <boost/circular_buffer.hpp>
 #include <boost/optional.hpp>
+#include <data_buffer/data_buffer_base.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs_data_buffer/pose_stamped_data_buffer.hpp>
 #include <grid_map_core/GridMap.hpp>
 #include <grid_map_core/iterators/GridMapIterator.hpp>
 #include <grid_map_msgs/msg/grid_map.hpp>
@@ -81,8 +83,6 @@ extern "C" {
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/laser_scan.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
-#include <data_buffer/data_buffer_base.hpp>
-#include <geometry_msgs_data_buffer/pose_stamped_data_buffer.hpp>
 
 namespace robotx_costmap_calculator
 {

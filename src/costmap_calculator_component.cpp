@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <chrono>
+#include <data_buffer/data_buffer_base.hpp>
 #include <grid_map_cv/GridMapCvConverter.hpp>
 #include <grid_map_ros/GridMapRosConverter.hpp>
 #include <memory>
@@ -22,7 +23,6 @@
 #include <robotx_costmap_calculator/costmap_calculator_component.hpp>
 #include <string>
 #include <vector>
-#include <data_buffer/data_buffer_base.hpp>
 
 namespace robotx_costmap_calculator
 {
@@ -37,8 +37,7 @@ CostmapCalculatorComponent::CostmapCalculatorComponent(const rclcpp::NodeOptions
   declare_parameter<std::string>(
     "laserscan_raw_topic", "/perception/pointcloud_to_laserscan_node/output");
   get_parameter("laserscan_raw_topic", laserscan_raw_topic);
-  declare_parameter<std::string>(
-    "current_pose_topic", "current_pose");
+  declare_parameter<std::string>("current_pose_topic", "current_pose");
   get_parameter("current_pose_topic", current_pose_topic);
   declare_parameter("resolution", 1.0);
   get_parameter("resolution", resolution_);
@@ -54,11 +53,11 @@ CostmapCalculatorComponent::CostmapCalculatorComponent(const rclcpp::NodeOptions
   get_parameter("visualize_frame_id", visualize_frame_id_);
   declare_parameter("buffer_length", 5.0);
   double buffer_length;
-  get_parameter("buffer_length",buffer_length);
+  get_parameter("buffer_length", buffer_length);
   std::string key;
   rclcpp::Clock::SharedPtr clock;
   grid_map::GridMap map;
-  data_buffer=std::make_shared<data_buffer::PoseStampedDataBuffer>(clock, key, buffer_length);
+  data_buffer = std::make_shared<data_buffer::PoseStampedDataBuffer>(clock, key, buffer_length);
 
   pointcloud_sub_ = create_subscription<sensor_msgs::msg::PointCloud2>(
     points_raw_topic, 10,
@@ -84,28 +83,24 @@ double sigmoid(double a, double b, double x)
   return ret;
 }
 
-
-
 void CostmapCalculatorComponent::poseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr pose)
 {
   geometry_msgs::msg::PoseStamped query_data;
-  query_data=*pose;
+  query_data = *pose;
   rclcpp::Time now_time;
-  rclcpp::Time query_time=now_time+rclcpp::Duration(5,0);
   data_buffer->addData(query_data);
-  data_buffer->queryData(now_time,query_data);
+  data_buffer->queryData(now_time, query_data);
 }
 
 void CostmapCalculatorComponent::pointCloudCallback(
   const sensor_msgs::msg::PointCloud2::SharedPtr cloud)
 {
-  
   grid_map::GridMap map;
   pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_cloud(new pcl::PointCloud<pcl::PointXYZ>());
   pcl::fromROSMsg(*cloud, *pcl_cloud);
   map.add("point_layer", 0.0);
   map.add("point_past_layer", 0.0);
-  map.add("point_sum_layer", 0.0);  
+  map.add("point_sum_layer", 0.0);
   map.setFrameId("base_link");
   map.setGeometry(
     grid_map::Length(resolution_ * num_grids_, resolution_ * num_grids_), resolution_);
@@ -134,18 +129,16 @@ void CostmapCalculatorComponent::pointCloudCallback(
     }
   }
   map_data_.push_back(map);
-  map["point_past_layer"]=map_data_[0].get("point_layer");
+  map["point_past_layer"] = map_data_[0].get("point_layer");
   map["point_sum_layer"] = map["point_layer"] + 0.5 * map["point_past_layer"];
   //RCLCPP_INFO(get_logger(), "gridmap_time:%f", duration.seconds());
   auto outputMessage = grid_map::GridMapRosConverter::toMessage(map);
   grid_map_pub_->publish(std::move(outputMessage));
   return;
-  
 }
 
 void CostmapCalculatorComponent::scanCallback(const sensor_msgs::msg::LaserScan::SharedPtr scan)
 {
-  
   //std::cout<<__FILE__<<","<<__LINE__<<std::endl;
   grid_map::GridMap map;
   map.add("laser_layer", 0.0);
@@ -161,7 +154,7 @@ void CostmapCalculatorComponent::scanCallback(const sensor_msgs::msg::LaserScan:
       double scan_x = scan->ranges[i] * std::cos(theta);
       double scan_y = scan->ranges[i] * std::sin(theta);
       for (grid_map::CircleIterator iterator(map, grid_map::Position(scan_x, scan_y), 0.5);
-          !iterator.isPastEnd(); ++iterator) {
+           !iterator.isPastEnd(); ++iterator) {
         if (std::isnan(map.at("laser_layer", *iterator))) {
           map.at("laser_layer", *iterator) = 0.1;
         } else {
@@ -172,9 +165,9 @@ void CostmapCalculatorComponent::scanCallback(const sensor_msgs::msg::LaserScan:
   }
   for (grid_map::GridMapIterator iterator(map); !iterator.isPastEnd(); ++iterator) {
     if (std::isnan(map.at("laser_layer", *iterator))) {
-        map.at("laser_layer", *iterator) = 0.0;
-      }
-  } 
+      map.at("laser_layer", *iterator) = 0.0;
+    }
+  }
   map_data_.push_back(map);
   map["laser_past_layer"] = map_data_[0].get("laser_layer");
   map["laser_sum_layer"] = map["laser_layer"] + 0.5 * map["laser_past_layer"];
@@ -182,7 +175,6 @@ void CostmapCalculatorComponent::scanCallback(const sensor_msgs::msg::LaserScan:
   grid_map_pub_->publish(std::move(message));
   map.clearAll();
   return;
-  
 }
 }  // namespace robotx_costmap_calculator
 
