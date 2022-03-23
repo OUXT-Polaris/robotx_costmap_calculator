@@ -27,8 +27,7 @@ find_package(pcl_conversions REQUIRED)
 find_package(PCL REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(OpenCV REQUIRED)
-find_package(data_buffer REQUIRED)
-find_package(geometry_msgs_data_buffer REQUIRED)
+
 
 include_directories(
   include
