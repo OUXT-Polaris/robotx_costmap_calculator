@@ -81,6 +81,8 @@ extern "C" {
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/laser_scan.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <data_buffer/data_buffer_base.hpp>
+#include <geometry_msgs_data_buffer/pose_stamped_data_buffer.hpp>
 
 namespace robotx_costmap_calculator
 {
@@ -95,12 +97,16 @@ private:
   rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr image_pub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_sub_;
   rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr laserscan_sub_;
+  rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr pose_sub_;
   void pointCloudCallback(const sensor_msgs::msg::PointCloud2::SharedPtr cloud);
   void scanCallback(const sensor_msgs::msg::LaserScan::SharedPtr scan);
+  void poseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr pose);
   boost::circular_buffer<grid_map::GridMap> map_data_;
   std::string points_raw_topic_;
   std::string laserscan_raw_topic_;
   std::string output_topic_;
+  std::string current_pose_topic;
+  geometry_msgs::msg::PoseStamped query_data;
   double resolution_;
   double laser_resolution_;
   rclcpp::Time timestamp_;
@@ -112,6 +118,7 @@ private:
   sensor_msgs::msg::Image img_msg;
   cv_bridge::CvImage img_bridge;
   std::string visualize_frame_id_;
+  std::shared_ptr<data_buffer::PoseStampedDataBuffer> data_buffer;
 };
 }  // namespace robotx_costmap_calculator
 

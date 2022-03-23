@@ -27,6 +27,8 @@ find_package(pcl_conversions REQUIRED)
 find_package(PCL REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(OpenCV REQUIRED)
+find_package(data_buffer REQUIRED)
+find_package(geometry_msgs_data_buffer REQUIRED)
 
 include_directories(
   include
@@ -60,6 +62,9 @@ ament_target_dependencies(costmap_calculator_component
   grid_map_core
   grid_map_ros
   pcl_conversions
+  geometry_msgs
+  data_buffer
+  geometry_msgs_data_buffer
   )
 target_link_libraries(costmap_calculator_component
  ${PCL_LIBRARIES})
@@ -81,6 +86,9 @@ ament_target_dependencies(costmap_calculator_node
   grid_map_msgs
   grid_map_ros
   pcl_conversions
+  geometry_msgs
+  data_buffer
+  geometry_msgs_data_buffer
   )
 
 
