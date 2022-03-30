@@ -102,11 +102,16 @@ private:
   void scanCallback(const sensor_msgs::msg::LaserScan::SharedPtr scan);
   void poseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr pose);
   boost::circular_buffer<grid_map::GridMap> map_data_;
+  boost::circular_buffer<sensor_msgs::msg::PointCloud2> cloud_buffer_;
+  boost::circular_buffer<sensor_msgs::msg::LaserScan> scan_buffer_;
+  grid_map::GridMap getScanToGridMap(geometry_msgs::msg::PoseStamped & pose,sensor_msgs::msg::LaserScan & scan);
+  grid_map::GridMap getPointCloudToGridMap(geometry_msgs::msg::PoseStamped & point_transform_pose, sensor_msgs::msg::PointCloud2 & cloud);
   std::string points_raw_topic_;
   std::string laserscan_raw_topic_;
   std::string output_topic_;
   std::string current_pose_topic;
   geometry_msgs::msg::PoseStamped query_data;
+  geometry_msgs::msg::PoseStamped new_pose;
   double resolution_;
   double laser_resolution_;
   rclcpp::Time timestamp_;
