@@ -112,27 +112,9 @@ void CostmapCalculatorComponent::scanCallback(const sensor_msgs::msg::LaserScan:
   point_transform_pose = interpolation_pose;
   //UpdatePoseTransform(point_transform_pose,cloud);
   grid_map::GridMap laser_map;
-  laser_map =getScanToGridMap(point_transform_pose,*scan);
+  laser_map =getScanToGridMap(point_transform_pose,scan);
   scan_buffer_.push_back(*scan);
   return;
-}
-
-grid_map::GridMap CostmapCalculatorComponent::getScanToGridMap(geometry_msgs::msg::PoseStamped & pose,sensor_msgs::msg::LaserScan & scan)
-{
-  grid_map::GridMap laser_map;
-  laser_map.add("current_laser_layer", 0.0);
-  laser_map.add("prev_laser_layer", 0.0);
-  laser_map.add("prev_prev_laser_layer", 0.0);
-  return laser_map;
-}
-
-grid_map::GridMap CostmapCalculatorComponent::getPointCloudToGridMap(geometry_msgs::msg::PoseStamped & point_transform_pose, sensor_msgs::msg::PointCloud2 & cloud)
-{
-  grid_map::GridMap map;
-  map.add("current_point_layer",0.0);
-  map.add("prev_point_layer",0.0);
-  map.add("prev_prev_point_layer",0.0);
-  return map;
 }
 
 void CostmapCalculatorComponent::pointCloudCallback(
@@ -147,9 +129,97 @@ void CostmapCalculatorComponent::pointCloudCallback(
   point_transform_pose = interpolation_pose;
   //UpdatePoseTransform(point_transform_pose,cloud);
   grid_map::GridMap map;
-  map =getPointCloudToGridMap(point_transform_pose,*cloud);
+  map =getPointCloudToGridMap(point_transform_pose,cloud);
+  auto outputMessage = grid_map::GridMapRosConverter::toMessage(map);
+  grid_map_pub_->publish(std::move(outputMessage));
   return;
 }
+
+grid_map::GridMap CostmapCalculatorComponent::getScanToGridMap(geometry_msgs::msg::PoseStamped::SharedPtr pose,sensor_msgs::msg::LaserScan::SharedPtr scan)
+{
+  grid_map::GridMap laser_map;
+  laser_map.add("current_laser_layer", 0.0);
+  laser_map.add("prev_laser_layer", 0.0);
+  laser_map.add("prev_prev_laser_layer", 0.0);
+  laser_map.setFrameId("base_link");
+  laser_map.setGeometry(
+    grid_map::Length(laser_resolution_ * laser_num_grids_, laser_resolution_ * laser_num_grids_),
+    laser_resolution_);
+  for (int i = 0; i < static_cast<int>(scan->ranges.size()); i++) {
+    if (range_max_ >= scan->ranges[i]) {
+      double theta = scan->angle_min + scan->angle_increment * static_cast<double>(i);
+      double scan_x = scan->ranges[i] * std::cos(theta);
+      double scan_y = scan->ranges[i] * std::sin(theta);
+      for (grid_map::CircleIterator iterator(laser_map, grid_map::Position(scan_x, scan_y), 0.5);
+           !iterator.isPastEnd(); ++iterator) {
+        if (std::isnan(laser_map.at("current_laser_layer", *iterator))) {
+          laser_map.at("current_laser_layer", *iterator) = 0.1;
+        } else {
+          laser_map.at("current_laser_layer", *iterator) = laser_map.at("current_laser_layer", *iterator) + 0.1;
+        }
+      }
+    }
+  }
+  for (grid_map::GridMapIterator iterator(laser_map); !iterator.isPastEnd(); ++iterator) {
+    if (std::isnan(laser_map.at("current_laser_layer", *iterator))) {
+      laser_map.at("current_laser_layer", *iterator) = 0.0;
+    }
+  }
+  /*
+  rclcpp::Time end_time = system_clock.now();
+  geometry_msgs::msg::PoseStamped new_pose=data_buffer->queryData(start_time,end_time,data_vector);
+  grid_map::Position position;
+  grid_map::Position position_transform;
+  position_transform.x() = position.x() + new_pose.pose.position.x;
+  position_transform.y() = position.y() + new_pose.pose.position.y;
+  map.setPosition(position_transform);
+  */
+  //map_data_.push_back(map);
+  //map["laser_past_layer"] = map_data_[0].get("laser_layer");
+  //map["laser_sum_layer"] = map["laser_layer"] + 0.5 * map["laser_past_layer"];
+  return laser_map;
+}
+
+grid_map::GridMap CostmapCalculatorComponent::getPointCloudToGridMap(const geometry_msgs::msg::PoseStamped & point_transform_pose, const sensor_msgs::msg::PointCloud2::SharedPtr cloud)
+{
+  grid_map::GridMap map;
+  pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_cloud(new pcl::PointCloud<pcl::PointXYZ>());
+  pcl::fromROSMsg(*cloud, *pcl_cloud);  
+  map.add("current_point_layer",0.0);
+  map.add("prev_point_layer",0.0);
+  map.add("prev_prev_point_layer",0.0);
+  map.setFrameId("base_link");
+  map.setGeometry(
+    grid_map::Length(resolution_ * num_grids_, resolution_ * num_grids_), resolution_);
+  pcl::PassThrough<pcl::PointXYZ> pass;
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered(new pcl::PointCloud<pcl::PointXYZ>);
+  for (grid_map::GridMapIterator iterator(map); !iterator.isPastEnd(); ++iterator) {
+    grid_map::Position position;
+    map.getPosition(*iterator, position);
+    double x_min = position.x() - (resolution_ * 0.5);
+    double x_max = position.x() + (resolution_ * 0.5);
+    double y_min = position.y() - (resolution_ * 0.5);
+    double y_max = position.y() + (resolution_ * 0.5);
+    pass.setInputCloud(pcl_cloud);
+    pass.setFilterFieldName("x");
+    pass.setFilterLimits(x_min, x_max);
+    pass.filter(*cloud_filtered);
+    pass.setInputCloud(cloud_filtered);
+    pass.setFilterFieldName("y");
+    pass.setFilterLimits(y_min, y_max);
+    pass.filter(*cloud_filtered);
+    int num_points = cloud_filtered->size();
+    if (num_points == 0) {
+      map.at("current_point_layer", *iterator) = 0.0;
+    } else {
+      map.at("current_point_layer", *iterator) = sigmoid(1.0, 0.0, (double)num_points);
+    }
+
+  }
+  return map;
+}
+
+
 /*
 void CostmapCalculatorComponent::pointCloudCallback(
   const sensor_msgs::msg::PointCloud2::SharedPtr cloud)
@@ -199,7 +269,6 @@ void CostmapCalculatorComponent::pointCloudCallback(
 
 void CostmapCalculatorComponent::scanCallback(const sensor_msgs::msg::LaserScan::SharedPtr scan)
 {
-  //std::cout<<__FILE__<<","<<__LINE__<<std::endl;
   rclcpp::Clock system_clock;
   rclcpp::Time start_time = system_clock.now();
   grid_map::GridMap map;
@@ -231,11 +300,6 @@ void CostmapCalculatorComponent::scanCallback(const sensor_msgs::msg::LaserScan:
       map.at("laser_layer", *iterator) = 0.0;
     }
   }
-  for (grid_map::GridMapIterator iterator(map); !iterator.isPastEnd(); ++iterator) {
-    if (std::isnan(map.at("laser_transform_layer", *iterator))) {
-      map.at("laser_transform_layer", *iterator) = 0.0;
-    }
-  }
   rclcpp::Time end_time = system_clock.now();
   geometry_msgs::msg::PoseStamped new_pose=data_buffer->queryData(start_time,end_time,data_vector);
   grid_map::Position position;
@@ -248,7 +312,6 @@ void CostmapCalculatorComponent::scanCallback(const sensor_msgs::msg::LaserScan:
   //map["laser_sum_layer"] = map["laser_layer"] + 0.5 * map["laser_past_layer"];
   auto message = grid_map::GridMapRosConverter::toMessage(map);
   grid_map_pub_->publish(std::move(message));
-  map.clearAll();
   return;
 }*/
 }  // namespace robotx_costmap_calculator
