@@ -93,8 +93,6 @@ void CostmapCalculatorComponent::initGridMap()
   map.add("current_laser_layer", 0.0);
   map.add("prev_laser_layer", 0.0);
   map.add("prev_prev_laser_layer", 0.0);
-  map.add("current_point_layer",0.0);
-  map.add("prev_point_layer",0.0);
   map.add("prev_prev_point_layer",0.0);
   map.setFrameId("base_link");
   map.setGeometry(
@@ -130,10 +128,15 @@ void CostmapCalculatorComponent::scanCallback(const sensor_msgs::msg::LaserScan:
 void CostmapCalculatorComponent::pointCloudCallback(
   const sensor_msgs::msg::PointCloud2::SharedPtr cloud)
 {
-  //UpdatePoseTransform(point_transform_pose,cloud);]
-  std::string point_current_layer("current_point_layer");
+  //UpdatePoseTransform(point_transform_pose,cloud);
+  //cloud_buffer_.push_back(*cloud);
+  std::string point_current_layer_name("current_point_layer");
+  std::string prev_point_layer_name("prev_point_layer");
+  //current_cloud =cloud_buffer[0];
+  //past_cloud = cloud_buffer[1];
   //std::cout<<__FILE__<<","<<__LINE__<<std::endl;
-  map[point_current_layer] =getPointCloudToGridMap(map,cloud,cloud->header.stamp,point_current_layer);
+  //map[point_current_layer_name] =getPointCloudToGridMap(cloud,cloud->header.stamp,point_current_layer_name);
+  map[prev_point_layer_name] =getPointCloudToGridMap(cloud,cloud->header.stamp,prev_point_layer_name);
   //map =getPointCloudToGridMap(cloud,cloud->header.stamp);
   auto outputMessage = grid_map::GridMapRosConverter::toMessage(map);
   grid_map_pub_->publish(std::move(outputMessage));
@@ -187,21 +190,19 @@ grid_map::GridMap CostmapCalculatorComponent::getScanToGridMap(const sensor_msgs
   return map;
 }
 
-grid_map::Matrix CostmapCalculatorComponent::getPointCloudToGridMap( const grid_map::GridMap& gridmap,const sensor_msgs::msg::PointCloud2::SharedPtr cloud,const rclcpp::Time stamp,const std::string & grid_map_layer_name)
+grid_map::Matrix CostmapCalculatorComponent::getPointCloudToGridMap(const sensor_msgs::msg::PointCloud2::SharedPtr cloud,const rclcpp::Time stamp,const std::string & grid_map_layer_name)
 {
-  cloud_buffer_.push_back(*cloud);
-  grid_map::Map point_map;
-  grid_map::Matrix grid_map_data_ = map[grid_map_layer_name];
-  point_map.add(grid_map_layer_name,0.0);
+  map.add(grid_map_layer_name,0.0);
   RCLCPP_INFO(get_logger(), "grid_map_layer_name=%s",grid_map_layer_name.c_str());
   data_buffer->queryData(stamp,interpolation_pose);
+  //std::cout<<__FILE__<<","<<__LINE__<<std::endl;
   pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_cloud(new pcl::PointCloud<pcl::PointXYZ>());
   pcl::fromROSMsg(*cloud, *pcl_cloud);  
   pcl::PassThrough<pcl::PointXYZ> pass;
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered(new pcl::PointCloud<pcl::PointXYZ>);
-  for (grid_map::GridMapIterator iterator(point_map); !iterator.isPastEnd(); ++iterator) {
+  for (grid_map::GridMapIterator iterator(map); !iterator.isPastEnd(); ++iterator) {
     grid_map::Position position;
-    point_map.getPosition(*iterator, position);
+    map.getPosition(*iterator, position);
     double x_min = position.x() - (resolution_ * 0.5);
     double x_max = position.x() + (resolution_ * 0.5);
     double y_min = position.y() - (resolution_ * 0.5);
@@ -216,9 +217,9 @@ grid_map::Matrix CostmapCalculatorComponent::getPointCloudToGridMap( const grid_
     pass.filter(*cloud_filtered);
     int num_points = cloud_filtered->size();
     if (num_points == 0) {
-      point_map.at(grid_map_layer_name, *iterator) = 0.0;
+      map.at(grid_map_layer_name, *iterator) = 0.0;
     } else {
-      point_map.at(grid_map_layer_name, *iterator) = sigmoid(1.0, 0.0, (double)num_points);
+      map.at(grid_map_layer_name, *iterator) = sigmoid(1.0, 0.0, (double)num_points);
     }
 
   }
