@@ -94,24 +94,30 @@ public:
 
 private:
   rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr grid_map_pub_;
-  rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr image_pub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_sub_;
   rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr laserscan_sub_;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr pose_sub_;
+  void initGridMap();
   void pointCloudCallback(const sensor_msgs::msg::PointCloud2::SharedPtr cloud);
   void scanCallback(const sensor_msgs::msg::LaserScan::SharedPtr scan);
   void poseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr pose);
   boost::circular_buffer<grid_map::GridMap> map_data_;
   boost::circular_buffer<sensor_msgs::msg::PointCloud2> cloud_buffer_;
   boost::circular_buffer<sensor_msgs::msg::LaserScan> scan_buffer_;
-  grid_map::GridMap getScanToGridMap(const geometry_msgs::msg::PoseStamped & pose,const sensor_msgs::msg::LaserScan::SharedPtr scan);
-  grid_map::GridMap getPointCloudToGridMap(const geometry_msgs::msg::PoseStamped & point_transform_pose, const sensor_msgs::msg::PointCloud2::SharedPtr cloud);
+  grid_map::GridMap map;
+  grid_map::GridMap point_map;
+  grid_map::GridMap getScanToGridMap(const sensor_msgs::msg::LaserScan::SharedPtr scan,const rclcpp::Time stamp);
+  grid_map::Matrix getPointCloudToGridMap(const grid_map::GridMap& gridmap,const sensor_msgs::msg::PointCloud2::SharedPtr cloud,const rclcpp::Time stamp,const std::string & grid_map_layer_name);
+  //grid_map::GridMap getPointCloudToGridMap(const sensor_msgs::msg::PointCloud2::SharedPtr cloud, const rclcpp::Time stamp);
   std::string points_raw_topic_;
+  grid_map::Matrix grid_map_data_;
   std::string laserscan_raw_topic_;
   std::string output_topic_;
   std::string current_pose_topic;
   geometry_msgs::msg::PoseStamped query_data;
   geometry_msgs::msg::PoseStamped new_pose;
+  geometry_msgs::msg::PoseStamped interpolation_pose;
+  double update_rate_;
   double resolution_;
   double laser_resolution_;
   rclcpp::Time timestamp_;
