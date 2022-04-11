@@ -105,9 +105,9 @@ private:
   boost::circular_buffer<sensor_msgs::msg::PointCloud2> cloud_buffer_;
   boost::circular_buffer<sensor_msgs::msg::LaserScan> scan_buffer_;
   grid_map::GridMap map;
-  grid_map::GridMap getScanToGridMap(const sensor_msgs::msg::LaserScan::SharedPtr scan,const rclcpp::Time stamp);
-  grid_map::Matrix getPointCloudToGridMap(const sensor_msgs::msg::PointCloud2::SharedPtr cloud,const rclcpp::Time stamp,const std::string & grid_map_layer_name);
-  //grid_map::GridMap getPointCloudToGridMap(const sensor_msgs::msg::PointCloud2::SharedPtr cloud, const rclcpp::Time stamp);
+  //grid_map::GridMap getScanToGridMap(const rclcpp::Time stamp);
+  grid_map::Matrix getScanToGridMap(const sensor_msgs::msg::LaserScan & scan, const rclcpp::Time stamp,const std::string & scan_layer_name);
+  grid_map::Matrix getPointCloudToGridMap(const sensor_msgs::msg::PointCloud2 & cloud, const rclcpp::Time stamp,const std::string & grid_map_layer_name);
   std::string points_raw_topic_;
   grid_map::Matrix grid_map_data_;
   std::string laserscan_raw_topic_;
