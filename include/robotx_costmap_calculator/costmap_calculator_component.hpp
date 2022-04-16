@@ -94,26 +94,41 @@ public:
 
 private:
   rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr grid_map_pub_;
-  rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr image_pub_;
+  rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr combine_grid_map_pub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_sub_;
   rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr laserscan_sub_;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr pose_sub_;
+  void initGridMap();
   void pointCloudCallback(const sensor_msgs::msg::PointCloud2::SharedPtr cloud);
   void scanCallback(const sensor_msgs::msg::LaserScan::SharedPtr scan);
   void poseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr pose);
   boost::circular_buffer<grid_map::GridMap> map_data_;
+  boost::circular_buffer<sensor_msgs::msg::PointCloud2> cloud_buffer_;
+  boost::circular_buffer<sensor_msgs::msg::LaserScan> scan_buffer_;
+  grid_map::GridMap combine_map;
+  grid_map::GridMap map;
+  //grid_map::GridMap getScanToGridMap(const rclcpp::Time stamp);
+  grid_map::Matrix getScanToGridMap(
+    const sensor_msgs::msg::LaserScan & scan, const rclcpp::Time stamp,
+    const std::string & scan_layer_name);
+  grid_map::Matrix getPointCloudToGridMap(
+    const sensor_msgs::msg::PointCloud2 & cloud, const rclcpp::Time stamp,
+    const std::string & grid_map_layer_name);
   std::string points_raw_topic_;
+  grid_map::Matrix grid_map_data_;
   std::string laserscan_raw_topic_;
   std::string output_topic_;
   std::string current_pose_topic;
   geometry_msgs::msg::PoseStamped query_data;
+  geometry_msgs::msg::PoseStamped new_pose;
+  geometry_msgs::msg::PoseStamped interpolation_pose;
+  double update_rate_;
   double resolution_;
   double laser_resolution_;
   rclcpp::Time timestamp_;
   int num_grids_;
   int laser_num_grids_;
   double range_max_;
-  cv::Mat laser_image;
   std_msgs::msg::Header header;
   sensor_msgs::msg::Image img_msg;
   cv_bridge::CvImage img_bridge;
