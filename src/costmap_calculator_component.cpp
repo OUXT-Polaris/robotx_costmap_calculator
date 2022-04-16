@@ -141,13 +141,13 @@ void CostmapCalculatorComponent::pointCloudCallback(
     map[point_current_layer_name] =
       getPointCloudToGridMap(cloud_, cloud_.header.stamp, point_current_layer_name);
   }
-  combine_map.add("point_combined_layer",0.0);
-  combine_map.add("scan_combined_layer",0.0);
-  if(map.exists("point_layer1")&& map.exists("scan_layer1")){
-    combine_map["point_combined_layer"] = map["point_layer0"]+map["point_layer1"];
-    combine_map["scan_combined_layer"] = map["scan_layer0"]+map["scan_layer1"];
+  combine_map.add("point_combined_layer", 0.0);
+  combine_map.add("scan_combined_layer", 0.0);
+  if (map.exists("point_layer1") && map.exists("scan_layer1")) {
+    combine_map["point_combined_layer"] = map["point_layer0"] + map["point_layer1"];
+    combine_map["scan_combined_layer"] = map["scan_layer0"] + map["scan_layer1"];
   }
-  auto combine_outputMessage =grid_map::GridMapRosConverter::toMessage(combine_map);
+  auto combine_outputMessage = grid_map::GridMapRosConverter::toMessage(combine_map);
   auto outputMessage = grid_map::GridMapRosConverter::toMessage(map);
   grid_map_pub_->publish(std::move(outputMessage));
   combine_grid_map_pub_->publish(std::move(combine_outputMessage));
