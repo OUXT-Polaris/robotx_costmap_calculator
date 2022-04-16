@@ -94,6 +94,7 @@ public:
 
 private:
   rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr grid_map_pub_;
+  rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr combine_grid_map_pub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_sub_;
   rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr laserscan_sub_;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr pose_sub_;
@@ -104,6 +105,7 @@ private:
   boost::circular_buffer<grid_map::GridMap> map_data_;
   boost::circular_buffer<sensor_msgs::msg::PointCloud2> cloud_buffer_;
   boost::circular_buffer<sensor_msgs::msg::LaserScan> scan_buffer_;
+  grid_map::GridMap combine_map;
   grid_map::GridMap map;
   //grid_map::GridMap getScanToGridMap(const rclcpp::Time stamp);
   grid_map::Matrix getScanToGridMap(
