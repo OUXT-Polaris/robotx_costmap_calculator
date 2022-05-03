@@ -61,6 +61,7 @@ extern "C" {
 // HEaders in ROS
 #include <cv_bridge/cv_bridge.h>
 #include <pcl/PCLPointCloud2.h>
+#include <pcl/common/transforms.h>
 #include <pcl/filters/crop_hull.h>
 #include <pcl/filters/passthrough.h>
 #include <pcl/io/pcd_io.h>
@@ -107,19 +108,18 @@ private:
   boost::circular_buffer<sensor_msgs::msg::LaserScan> scan_buffer_;
   grid_map::GridMap combine_map;
   grid_map::GridMap map;
-  //grid_map::GridMap getScanToGridMap(const rclcpp::Time stamp);
+  void TransformScan(
+    const sensor_msgs::msg::LaserScan & scan, const geometry_msgs::msg::PoseStamped & pose);
   grid_map::Matrix getScanToGridMap(
-    const sensor_msgs::msg::LaserScan & scan, const rclcpp::Time stamp,
-    const std::string & scan_layer_name);
+    const sensor_msgs::msg::LaserScan & scan, const std::string & scan_layer_name);
   grid_map::Matrix getPointCloudToGridMap(
-    const sensor_msgs::msg::PointCloud2 & cloud, const rclcpp::Time stamp,
-    const std::string & grid_map_layer_name);
+    const sensor_msgs::msg::PointCloud2 & cloud, const std::string & grid_map_layer_name);
   std::string points_raw_topic_;
   grid_map::Matrix grid_map_data_;
   std::string laserscan_raw_topic_;
   std::string output_topic_;
   std::string current_pose_topic;
-  geometry_msgs::msg::PoseStamped query_data;
+  geometry_msgs::msg::PoseStamped pose_data;
   geometry_msgs::msg::PoseStamped new_pose;
   geometry_msgs::msg::PoseStamped interpolation_pose;
   double update_rate_;
