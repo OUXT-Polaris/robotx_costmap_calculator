@@ -184,8 +184,8 @@ void CostmapCalculatorComponent::TransformScan(
                            scan_y * scan_rotation_matrix(0, 1) + pose.pose.position.x;
       double transform_y = scan_x * scan_rotation_matrix(1, 0) +
                            scan_y * scan_rotation_matrix(1, 1) + pose.pose.position.y;
-      scan_x =transform_x;
-      scan_y =transform_y;
+      scan_x = transform_x;
+      scan_y = transform_y;
     }
   }
 }
