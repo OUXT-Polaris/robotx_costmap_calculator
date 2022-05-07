@@ -43,8 +43,6 @@ CostmapCalculatorComponent::CostmapCalculatorComponent(const rclcpp::NodeOptions
   get_parameter("resolution", resolution_);
   declare_parameter("num_grids", 20);
   get_parameter("num_grids", num_grids_);
-  declare_parameter("update_rate", 10.0);
-  get_parameter("update_rate", update_rate_);
   declare_parameter("range_max", 20.0);
   get_parameter("range_max", range_max_);
   declare_parameter("visualize_frame_id", "map");
@@ -149,7 +147,8 @@ void CostmapCalculatorComponent::pointCloudCallback(
       //rotation_matrix=quaternion_operation::getRotationMatrix(poses.pose.orientation);
       Eigen::Matrix4d transform_matrix = Eigen::Matrix4d::Identity();
       transform_matrix.block<3, 3>(0, 0) = rotation_matrix;
-      //transform_matrix.block<3,1>(0,3)=Eigen::Vector3d(poses.pose.position.x,poses.pose.position.y,poses.pose.position.z);
+      transform_matrix.block<3, 1>(0, 3) =
+        Eigen::Vector3d(poses.pose.position.x, poses.pose.position.y, poses.pose.position.z);
       pcl::transformPointCloud(*transform_cloud, *transform_cloud, transform_matrix);
       pcl::toROSMsg(*transform_cloud, cloud_);
     }
@@ -199,7 +198,9 @@ grid_map::Matrix CostmapCalculatorComponent::getScanToGridMap(
       double theta = scan.angle_min + scan.angle_increment * static_cast<double>(i);
       double scan_x = scan.ranges[i] * std::cos(theta);
       double scan_y = scan.ranges[i] * std::sin(theta);
-      for (grid_map::CircleIterator iterator(map, grid_map::Position(scan_x, scan_y), 0.5);
+      //for (grid_map::CircleIterator iterator(map, grid_map::Position(scan_x, scan_y), 1.0);
+      for (grid_map::CircleIterator iterator(
+             map, grid_map::Position(scan_x, scan_y), resolution_ * 0.5);
            !iterator.isPastEnd(); ++iterator) {
         if (std::isnan(map.at(scan_layer_name, *iterator))) {
           map.at(scan_layer_name, *iterator) = 0.0;
