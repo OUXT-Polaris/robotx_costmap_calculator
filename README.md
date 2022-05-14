@@ -8,8 +8,10 @@
 /current_pose(geometry_msgs::msg::PoseStamped)
 
 ### publish Topics
-/combined_grid_map(grid_map::msgs::msg::GridMap)
-/grid_map(grid_map::msgs::msg::GridMap)
+#### /combined_grid_map(grid_map::msgs::msg::GridMap)
+各レイヤーの統合トピック
+#### /grid_map(grid_map::msgs::msg::GridMap)
+PointCloudやLaserScanの表示
 
 ### parameters
 | Name                         | Type   | Description                                  |default                                         |
