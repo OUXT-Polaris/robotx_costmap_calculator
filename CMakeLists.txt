@@ -26,20 +26,17 @@ ament_auto_find_build_dependencies()
 find_package(pcl_conversions REQUIRED)
 find_package(PCL REQUIRED)
 find_package(Eigen3 REQUIRED)
-find_package(OpenCV REQUIRED)
 
 
 include_directories(
   include
   ${PCL_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
-  ${OpenCV_INCLUDE_DIRS}
 )
 
 link_directories(
   ${PCL_LIBRARY_DIRS}
   ${EIGEN3_LIBRARY_DIRS}
-  ${OpenCV_LIBRARY_DIRS}
 )
 
 add_definitions(${PCL_DEFINITIONS})
