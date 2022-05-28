@@ -156,7 +156,7 @@ void CostmapCalculatorComponent::pointCloudCallback(
       Eigen::Matrix4d transform_matrix = Eigen::Matrix4d::Identity();
       transform_matrix.block<3, 3>(0, 0) = rotation_matrix;
       //transform_matrix.block<3, 1>(0, 3) =
-        //Eigen::Vector3d(poses.pose.position.x, poses.pose.position.y, poses.pose.position.z);
+      //Eigen::Vector3d(poses.pose.position.x, poses.pose.position.y, poses.pose.position.z);
       pcl::transformPointCloud(*transform_cloud, *transform_cloud, transform_matrix);
       pcl::toROSMsg(*transform_cloud, cloud_);
     }
@@ -167,8 +167,8 @@ void CostmapCalculatorComponent::pointCloudCallback(
   combine_map.add("point_combined_layer", 0.0);
   combine_map.add("scan_combined_layer", 0.0);
   if (map.exists("point_layer1") && map.exists("scan_layer1")) {
-    combine_map["point_combined_layer"] = 0.6* map["point_layer0"] +0.4*map["point_layer1"];
-    combine_map["scan_combined_layer"] = map["scan_layer0"] + scan_late*map["scan_layer1"];
+    combine_map["point_combined_layer"] = 0.6 * map["point_layer0"] + 0.4 * map["point_layer1"];
+    combine_map["scan_combined_layer"] = map["scan_layer0"] + scan_late * map["scan_layer1"];
   }
   auto combine_outputMessage = grid_map::GridMapRosConverter::toMessage(combine_map);
   auto outputMessage = grid_map::GridMapRosConverter::toMessage(map);
