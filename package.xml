@@ -23,7 +23,7 @@
   <depend>libpcl-all-dev</depend>
   <depend>OpenCV</depend>
   <depend>data_buffer</depend>
-  <depend>quotanion_operation</depend>
+  <depend>quaternion_operation</depend>
   <depend>geometry_msgs_data_buffer</depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ouxt_lint_common</test_depend>
