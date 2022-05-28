@@ -59,7 +59,6 @@ extern "C" {
 #endif
 
 // HEaders in ROS
-#include <cv_bridge/cv_bridge.h>
 #include <pcl/PCLPointCloud2.h>
 #include <pcl/common/transforms.h>
 #include <pcl/filters/crop_hull.h>
@@ -78,8 +77,6 @@ extern "C" {
 #include <grid_map_msgs/msg/grid_map.hpp>
 #include <grid_map_ros/grid_map_ros.hpp>
 #include <memory>
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/laser_scan.hpp>
@@ -129,9 +126,11 @@ private:
   int num_grids_;
   int laser_num_grids_;
   double range_max_;
+  float point_late;
+  double scan_late;
+  float currentpoint_downlate;
   std_msgs::msg::Header header;
   sensor_msgs::msg::Image img_msg;
-  cv_bridge::CvImage img_bridge;
   std::string visualize_frame_id_;
   std::shared_ptr<data_buffer::PoseStampedDataBuffer> data_buffer;
 };
