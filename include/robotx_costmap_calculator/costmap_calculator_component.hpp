@@ -19,10 +19,10 @@
 extern "C" {
 #endif
 
-// The below macros are taken from https://gcc.gnu.org/wiki/Visibility and from
-// demos/composition/include/composition/visibility_control.h at https://github.com/ros2/demos
-#if defined _WIN32 || defined __CYGWIN__
-#ifdef __GNUC__
+  // The below macros are taken from https://gcc.gnu.org/wiki/Visibility and from
+  // demos/composition/include/composition/visibility_control.h at https://github.com/ros2/demos
+  #if defined _WIN32 || defined __CYGWIN__
+  #ifdef __GNUC__
 #define COSTMAP_CALCULATOR_COSTMAP_CALCULATOR_COMPONENT_EXPORT __attribute__((dllexport))
 #define COSTMAP_CALCULATOR_COSTMAP_CALCULATOR_COMPONENT_IMPORT __attribute__((dllimport))
 #else
@@ -58,7 +58,7 @@ extern "C" {
 }  // extern "
 #endif
 
-// HEaders in ROS
+// Headers in ROS
 #include <pcl/PCLPointCloud2.h>
 #include <pcl/common/transforms.h>
 #include <pcl/filters/crop_hull.h>
@@ -71,14 +71,15 @@ extern "C" {
 #include <boost/optional.hpp>
 #include <data_buffer/data_buffer_base.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/polygon.hpp>
 #include <geometry_msgs_data_buffer/pose_stamped_data_buffer.hpp>
 #include <grid_map_core/GridMap.hpp>
 #include <grid_map_core/iterators/GridMapIterator.hpp>
 #include <grid_map_msgs/msg/grid_map.hpp>
 #include <grid_map_ros/grid_map_ros.hpp>
+#include <pcl_apps_msgs/msg/polygon_array.hpp>
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
-#include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/laser_scan.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
@@ -105,6 +106,7 @@ private:
   boost::circular_buffer<sensor_msgs::msg::LaserScan> scan_buffer_;
   grid_map::GridMap combine_map;
   grid_map::GridMap map;
+  std::vector<geometry_msgs::msg::Polygon> costmapToObstaclePolygon(grid_map::GridMap & map);
   void TransformScan(
     const sensor_msgs::msg::LaserScan & scan, const geometry_msgs::msg::PoseStamped & pose);
   grid_map::Matrix getScanToGridMap(

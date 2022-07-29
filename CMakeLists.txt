@@ -22,7 +22,6 @@ include(cmake/robotx_costmap_calculator-extras.cmake)
 find_package(ament_cmake_auto REQUIRED)
 find_package(grid_map_cmake_helpers REQUIRED)
 ament_auto_find_build_dependencies()
-
 find_package(pcl_conversions REQUIRED)
 find_package(PCL REQUIRED)
 find_package(Eigen3 REQUIRED)
@@ -61,6 +60,7 @@ ament_target_dependencies(costmap_calculator_component
   geometry_msgs
   data_buffer
   geometry_msgs_data_buffer
+  pcl_apps_msgs
   )
 target_link_libraries(costmap_calculator_component
  ${PCL_LIBRARIES})
@@ -85,6 +85,7 @@ ament_target_dependencies(costmap_calculator_node
   geometry_msgs
   data_buffer
   geometry_msgs_data_buffer
+  pcl_apps_msgs
   )
 
 

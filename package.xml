@@ -22,6 +22,7 @@
   <depend>eigen</depend>
   <depend>libpcl-all-dev</depend>
   <depend>data_buffer</depend>
+  <depend>pcl_apps_msgs</depend>
   <depend>quaternion_operation</depend>
   <depend>geometry_msgs_data_buffer</depend>
   <test_depend>ament_lint_auto</test_depend>

@@ -38,9 +38,9 @@ CostmapCalculatorComponent::CostmapCalculatorComponent(const rclcpp::NodeOptions
   get_parameter("laserscan_raw_topic", laserscan_raw_topic);
   declare_parameter<std::string>("current_pose_topic", "/current_pose");
   get_parameter("current_pose_topic", current_pose_topic);
-  declare_parameter("resolution", 1.0);
+  declare_parameter("resolution", 0.5);
   get_parameter("resolution", resolution_);
-  declare_parameter("num_grids", 20);
+  declare_parameter("num_grids", 50);
   get_parameter("num_grids", num_grids_);
   declare_parameter("range_max", 20.0);
   get_parameter("range_max", range_max_);
@@ -55,13 +55,11 @@ CostmapCalculatorComponent::CostmapCalculatorComponent(const rclcpp::NodeOptions
   int scan_buffer_size_;
   declare_parameter("scan_buffer_size_", 2);
   get_parameter("scan_buffer_size_", scan_buffer_size_);
-  float point_late;
   declare_parameter("point_late", 0.5);
   get_parameter("point_late", point_late);
   double scan_late;
   declare_parameter("scan_late", 0.1);
   get_parameter("scan_late", scan_late);
-  float currentpoint_downlate;
   declare_parameter("currentpoint_downlate", 0.6);
   get_parameter("currentpoint_downlate", currentpoint_downlate);
   std::string key;
@@ -79,6 +77,7 @@ CostmapCalculatorComponent::CostmapCalculatorComponent(const rclcpp::NodeOptions
   pose_sub_ = create_subscription<geometry_msgs::msg::PoseStamped>(
     current_pose_topic, 10,
     std::bind(&CostmapCalculatorComponent::poseCallback, this, std::placeholders::_1));
+  
 
   grid_map_pub_ = create_publisher<grid_map_msgs::msg::GridMap>("grid_map", 1);
 
@@ -116,10 +115,11 @@ void CostmapCalculatorComponent::poseCallback(const geometry_msgs::msg::PoseStam
   return;
 }
 
+
 void CostmapCalculatorComponent::scanCallback(const sensor_msgs::msg::LaserScan::SharedPtr scan)
 {
   scan_buffer_.push_back(*scan);
-  for (int j = 0; j < scan_buffer_.size(); j++) {
+  for (size_t j = 0; j < scan_buffer_.size(); j++) {
     sensor_msgs::msg::LaserScan scan_ = scan_buffer_[j];
     if (j > 0) {
       geometry_msgs::msg::PoseStamped scan_poses;
@@ -129,51 +129,75 @@ void CostmapCalculatorComponent::scanCallback(const sensor_msgs::msg::LaserScan:
     std::stringstream ss;
     ss << j;
     std::string scan_layer_name("scan_layer" + ss.str());
-    map[scan_layer_name] = getScanToGridMap(scan_, scan_layer_name);
+    map[scan_layer_name] = getScanToGridMap(scan_, scan_layer_name);    
   }
+  // combine_map.add("point_combined_layer", 0.0);
+  combine_map.add("scan_combined_layer", 0.0);
+  if (map.exists("scan_layer1")) {
+    // combine_map["point_combined_layer"] = currentpoint_downlate * map["point_layer0"] + point_late  * map["point_layer1"];
+    combine_map["scan_combined_layer"] = map["scan_layer0"] + scan_late * map["scan_layer1"];
+  }
+  auto getObstacle_polygon(combine_map);
+  auto combine_outputMessage = grid_map::GridMapRosConverter::toMessage(combine_map);
+  auto outputMessage = grid_map::GridMapRosConverter::toMessage(map);
+
+  grid_map_pub_->publish(std::move(outputMessage));
+  combine_grid_map_pub_->publish(std::move(combine_outputMessage));
   return;
 }
+
+ std::vector<geometry_msgs::msg::Polygon> CostmapCalculatorComponent::costmapToObstaclePolygon(grid_map::GridMap & map)
+ {
+  std::vector<geometry_msgs::msg::Polygon> polygons;
+  grid_map::GridMap polygon_map;
+  polygon_map =map;
+  return polygons;
+ }
 
 void CostmapCalculatorComponent::pointCloudCallback(
   const sensor_msgs::msg::PointCloud2::SharedPtr cloud)
 {
   cloud_buffer_.push_back(*cloud);
-  for (int i = 0; i < cloud_buffer_.size(); i++) {
-    sensor_msgs::msg::PointCloud2 cloud_ = cloud_buffer_[i];
-    std::stringstream cloud_ss;
-    if (i > 0) {
-      pcl::PointCloud<pcl::PointXYZ>::Ptr transform_cloud(new pcl::PointCloud<pcl::PointXYZ>());
-      pcl::fromROSMsg(cloud_, *transform_cloud);
-      geometry_msgs::msg::PoseStamped poses;
-      data_buffer->queryData(cloud->header.stamp, poses);
-      Eigen::Matrix3d rotation_matrix;
-      geometry_msgs::msg::Quaternion current_pose_orientation = pose_data.pose.orientation;
-      geometry_msgs::msg::Quaternion scan_orientation;
-      scan_orientation =
-        quaternion_operation::getRotation(poses.pose.orientation, current_pose_orientation);
-      rotation_matrix = quaternion_operation::getRotationMatrix(scan_orientation);
-      //rotation_matrix=quaternion_operation::getRotationMatrix(poses.pose.orientation);
-      Eigen::Matrix4d transform_matrix = Eigen::Matrix4d::Identity();
-      transform_matrix.block<3, 3>(0, 0) = rotation_matrix;
-      //transform_matrix.block<3, 1>(0, 3) =
-      //Eigen::Vector3d(poses.pose.position.x, poses.pose.position.y, poses.pose.position.z);
-      pcl::transformPointCloud(*transform_cloud, *transform_cloud, transform_matrix);
-      pcl::toROSMsg(*transform_cloud, cloud_);
-    }
-    cloud_ss << i;
-    std::string point_current_layer_name("point_layer" + cloud_ss.str());
-    map[point_current_layer_name] = getPointCloudToGridMap(cloud_, point_current_layer_name);
-  }
-  combine_map.add("point_combined_layer", 0.0);
-  combine_map.add("scan_combined_layer", 0.0);
-  if (map.exists("point_layer1") && map.exists("scan_layer1")) {
-    combine_map["point_combined_layer"] = 0.6 * map["point_layer0"] + 0.4 * map["point_layer1"];
-    combine_map["scan_combined_layer"] = map["scan_layer0"] + scan_late * map["scan_layer1"];
-  }
-  auto combine_outputMessage = grid_map::GridMapRosConverter::toMessage(combine_map);
-  auto outputMessage = grid_map::GridMapRosConverter::toMessage(map);
-  grid_map_pub_->publish(std::move(outputMessage));
-  combine_grid_map_pub_->publish(std::move(combine_outputMessage));
+  // for (size_t i = 0; i < cloud_buffer_.size(); i++) {
+  //   sensor_msgs::msg::PointCloud2 cloud_ = cloud_buffer_[i];
+  //   std::stringstream cloud_ss;
+  //   if (i > 0) {
+  //     pcl::PointCloud<pcl::PointXYZ>::Ptr transform_cloud(new pcl::PointCloud<pcl::PointXYZ>());
+  //     pcl::fromROSMsg(cloud_, *transform_cloud);
+  //     geometry_msgs::msg::PoseStamped poses;
+  //     data_buffer->queryData(cloud->header.stamp, poses);
+  //     Eigen::Matrix3d rotation_matrix;
+  //     geometry_msgs::msg::Quaternion current_pose_orientation = pose_data.pose.orientation;
+  //     geometry_msgs::msg::Quaternion scan_orientation;
+  //     scan_orientation =
+  //       quaternion_operation::getRotation(poses.pose.orientation, current_pose_orientation);
+  //     rotation_matrix = quaternion_operation::getRotationMatrix(scan_orientation);
+  //     //rotation_matrix=quaternion_operation::getRotationMatrix(poses.pose.orientation);
+  //     Eigen::Matrix4d transform_matrix = Eigen::Matrix4d::Identity();
+  //     transform_matrix.block<3, 3>(0, 0) = rotation_matrix;
+  //     //transform_matrix.block<3, 1>(0, 3) =
+  //     //Eigen::Vector3d(poses.pose.position.x, poses.pose.position.y, poses.pose.position.z);
+  //     pcl::transformPointCloud(*transform_cloud, *transform_cloud, transform_matrix);
+  //     pcl::toROSMsg(*transform_cloud, cloud_);
+  //   }
+  //   cloud_ss << i;
+  //   std::string point_current_layer_name("point_layer" + cloud_ss.str());
+  //   map[point_current_layer_name] = getPointCloudToGridMap(cloud_, point_current_layer_name);
+  // }
+  // combine_map.add("point_combined_layer", 0.0);
+  // combine_map.add("scan_combined_layer", 0.0);
+  // combine_map.add("combined_layer",0.0);
+  // if (map.exists("point_layer1") && map.exists("scan_layer1")) {
+  //   combine_map["point_combined_layer"] = currentpoint_downlate * map["point_layer0"] + point_late  * map["point_layer1"];
+  //   combine_map["scan_combined_layer"] = map["scan_layer0"] + scan_late * map["scan_layer1"];
+  //   if(combine_map.exists("scan_combined_layer")){
+  //     combine_map["combined_layer"] =0.1*combine_map["point_combined_layer"] + 0.1*combine_map["scan_combined_layer"];
+  //   }
+  // }
+  // auto combine_outputMessage = grid_map::GridMapRosConverter::toMessage(combine_map);
+  // auto outputMessage = grid_map::GridMapRosConverter::toMessage(map);
+  // grid_map_pub_->publish(std::move(outputMessage));
+  // combine_grid_map_pub_->publish(std::move(combine_outputMessage));
   return;
 }
 
