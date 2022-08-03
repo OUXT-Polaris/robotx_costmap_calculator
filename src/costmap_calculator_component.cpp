@@ -132,26 +132,48 @@ void CostmapCalculatorComponent::scanCallback(const sensor_msgs::msg::LaserScan:
     map[scan_layer_name] = getScanToGridMap(scan_, scan_layer_name);    
   }
   // combine_map.add("point_combined_layer", 0.0);
-  combine_map.add("scan_combined_layer", 0.0);
+  std::string scan_combined_layer_name("scan_combined_layer");
+  combine_map.add(scan_combined_layer_name, 0.0);
   if (map.exists("scan_layer1")) {
     // combine_map["point_combined_layer"] = currentpoint_downlate * map["point_layer0"] + point_late  * map["point_layer1"];
-    combine_map["scan_combined_layer"] = map["scan_layer0"] + scan_late * map["scan_layer1"];
+    combine_map[scan_combined_layer_name] = map["scan_layer0"] + scan_late * map["scan_layer1"];
+    sensor_msgs::msg::PointCloud2 input_cloud;
+    grid_map::GridMapRosConverter::toPointCloud(combine_map, scan_combined_layer_name,input_cloud);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr clustering_cloud(new pcl::PointCloud<pcl::PointXYZ>());
+    pcl::fromROSMsg(input_cloud,*clustering_cloud);
+    costmapToObstaclePolygon(clustering_cloud);
   }
-  auto getObstacle_polygon(combine_map);
   auto combine_outputMessage = grid_map::GridMapRosConverter::toMessage(combine_map);
   auto outputMessage = grid_map::GridMapRosConverter::toMessage(map);
-
   grid_map_pub_->publish(std::move(outputMessage));
   combine_grid_map_pub_->publish(std::move(combine_outputMessage));
   return;
 }
 
- std::vector<geometry_msgs::msg::Polygon> CostmapCalculatorComponent::costmapToObstaclePolygon(grid_map::GridMap & map)
+ void CostmapCalculatorComponent::costmapToObstaclePolygon(pcl::PointCloud<pcl::PointXYZ>::Ptr clustering_cloud)
  {
   std::vector<geometry_msgs::msg::Polygon> polygons;
-  grid_map::GridMap polygon_map;
-  polygon_map =map;
-  return polygons;
+  pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
+  tree->setInputCloud (clustering_cloud);
+  std::cout<<__FILE__<<","<<__LINE__<<std::endl;
+  std::vector<pcl::PointIndices> cluster_indices;
+  pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
+  ec.setClusterTolerance (1.0); // 2cm
+  ec.setMinClusterSize (1);
+  ec.setMaxClusterSize (2500);
+  ec.setSearchMethod (tree);
+  ec.setInputCloud (clustering_cloud);
+  ec.extract (cluster_indices);
+  int j = 0;
+  std::cout<<__FILE__<<","<<__LINE__<<std::endl;
+  for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it)
+  {
+    std::cout<<__FILE__<<","<<__LINE__<<std::endl;
+    
+    j++;
+  }
+
+  return;
  }
 
 void CostmapCalculatorComponent::pointCloudCallback(

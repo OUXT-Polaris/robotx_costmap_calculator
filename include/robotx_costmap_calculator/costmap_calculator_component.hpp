@@ -63,9 +63,11 @@ extern "C" {
 #include <pcl/common/transforms.h>
 #include <pcl/filters/crop_hull.h>
 #include <pcl/filters/passthrough.h>
+#include <pcl/search/kdtree.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
+#include <pcl/segmentation/extract_clusters.h>
 
 #include <boost/circular_buffer.hpp>
 #include <boost/optional.hpp>
@@ -106,7 +108,7 @@ private:
   boost::circular_buffer<sensor_msgs::msg::LaserScan> scan_buffer_;
   grid_map::GridMap combine_map;
   grid_map::GridMap map;
-  std::vector<geometry_msgs::msg::Polygon> costmapToObstaclePolygon(grid_map::GridMap & map);
+  void costmapToObstaclePolygon(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
   void TransformScan(
     const sensor_msgs::msg::LaserScan & scan, const geometry_msgs::msg::PoseStamped & pose);
   grid_map::Matrix getScanToGridMap(
