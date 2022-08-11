@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <quaternion_operation/quaternion_operation.h>
 
 #include <chrono>
 #include <data_buffer/data_buffer_base.hpp>
@@ -38,9 +37,9 @@ CostmapCalculatorComponent::CostmapCalculatorComponent(const rclcpp::NodeOptions
   get_parameter("laserscan_raw_topic", laserscan_raw_topic);
   declare_parameter<std::string>("current_pose_topic", "/current_pose");
   get_parameter("current_pose_topic", current_pose_topic);
-  declare_parameter("resolution", 0.5);
+  declare_parameter("resolution", 1.0);
   get_parameter("resolution", resolution_);
-  declare_parameter("num_grids", 50);
+  declare_parameter("num_grids", 20);
   get_parameter("num_grids", num_grids_);
   declare_parameter("range_max", 20.0);
   get_parameter("range_max", range_max_);
@@ -84,7 +83,6 @@ CostmapCalculatorComponent::CostmapCalculatorComponent(const rclcpp::NodeOptions
   combine_grid_map_pub_ = create_publisher<grid_map_msgs::msg::GridMap>("combine_grid_map", 1);
   cloud_buffer_ = boost::circular_buffer<sensor_msgs::msg::PointCloud2>(point_buffer_size_);
   scan_buffer_ = boost::circular_buffer<sensor_msgs::msg::LaserScan>(scan_buffer_size_);
-  map_data_ = boost::circular_buffer<grid_map::GridMap>(2);
 
   initGridMap();
 }
