@@ -144,14 +144,6 @@ void CostmapCalculatorComponent::scanCallback(const sensor_msgs::msg::LaserScan:
   return;
 }
 
- std::vector<geometry_msgs::msg::Polygon> CostmapCalculatorComponent::costmapToObstaclePolygon(grid_map::GridMap & map)
- {
-  std::vector<geometry_msgs::msg::Polygon> polygons;
-  grid_map::GridMap polygon_map;
-  polygon_map =map;
-  return polygons;
- }
-
 void CostmapCalculatorComponent::pointCloudCallback(
   const sensor_msgs::msg::PointCloud2::SharedPtr cloud)
 {

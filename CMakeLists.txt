@@ -88,6 +88,36 @@ ament_target_dependencies(costmap_calculator_node
   pcl_apps_msgs
   )
 
+add_library(costmap_to_polygon_component SHARED
+  src/costmap_to_polygon_component.cpp
+)
+target_compile_definitions(costmap_to_polygon_component
+  PRIVATE "COSTMAP_TO_POLYGON_COMPONENT_BUILDING_DLL")
+ament_target_dependencies(costmap_to_polygon_component
+  rclcpp
+  rclcpp_components
+  grid_map_msgs
+  grid_map_ros
+  pcl_apps_msgs
+)
+
+add_executable(costmap_to_polygon_node
+  src/costmap_to_polygon_node.cpp
+)
+
+rclcpp_components_register_nodes(costmap_to_polygon_component
+ "robotx_costmap_calculator::CostmapToPolygonComponent")
+
+target_link_libraries(costmap_to_polygon_node
+costmap_to_polygon_component)
+ament_target_dependencies(costmap_to_polygon_node
+  rclcpp
+  rclcpp_components
+  grid_map_msgs
+  grid_map_ros
+  pcl_apps_msgs)
+
+
 
  foreach(target ${target_list})
    target_compile_options(${target} PRIVATE "SHELL:--param gcc-min-expand=1")
@@ -101,6 +131,12 @@ install(TARGETS
 )
 
 install(TARGETS costmap_calculator_component 
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+  INCLUDES DESTINATION include)
+
+  install(TARGETS costmap_to_polygon_component 
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
