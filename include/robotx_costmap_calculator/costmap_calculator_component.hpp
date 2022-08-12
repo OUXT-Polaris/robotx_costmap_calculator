@@ -127,8 +127,6 @@ private:
   float point_late;
   double scan_late;
   float currentpoint_downrate;
-  std_msgs::msg::Header header;
-  sensor_msgs::msg::Image img_msg;
   std::string visualize_frame_id_;
   std::shared_ptr<data_buffer::PoseStampedDataBuffer> data_buffer;
 };
