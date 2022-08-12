@@ -119,7 +119,7 @@ void CostmapCalculatorComponent::poseCallback(const geometry_msgs::msg::PoseStam
 void CostmapCalculatorComponent::scanCallback(const sensor_msgs::msg::LaserScan::SharedPtr scan)
 {
   scan_buffer_.push_back(*scan);
-  for (int j = 0; j < scan_buffer_.size(); j++) {
+  for (size_t j = 0; j < scan_buffer_.size(); j++) {
     sensor_msgs::msg::LaserScan scan_ = scan_buffer_[j];
     if (j > 0) {
       geometry_msgs::msg::PoseStamped scan_poses;
@@ -138,7 +138,7 @@ void CostmapCalculatorComponent::pointCloudCallback(
   const sensor_msgs::msg::PointCloud2::SharedPtr cloud)
 {
   cloud_buffer_.push_back(*cloud);
-  for (int i = 0; i < cloud_buffer_.size(); i++) {
+  for (size_t i = 0; i < cloud_buffer_.size(); i++) {
     sensor_msgs::msg::PointCloud2 cloud_ = cloud_buffer_[i];
     std::stringstream cloud_ss;
     if (i > 0) {
