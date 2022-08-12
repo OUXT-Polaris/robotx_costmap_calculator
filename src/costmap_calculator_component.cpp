@@ -61,9 +61,9 @@ CostmapCalculatorComponent::CostmapCalculatorComponent(const rclcpp::NodeOptions
   double scan_late;
   declare_parameter("scan_late", 0.1);
   get_parameter("scan_late", scan_late);
-  float currentpoint_downlate;
-  declare_parameter("currentpoint_downlate", 0.6);
-  get_parameter("currentpoint_downlate", currentpoint_downlate);
+  float currentpoint_downrate;
+  declare_parameter("currentpoint_downrate", 0.6);
+  get_parameter("currentpoint_downrate", currentpoint_downrate);
   std::string key;
   data_buffer =
     std::make_shared<data_buffer::PoseStampedDataBuffer>(get_clock(), key, buffer_length);
@@ -85,7 +85,6 @@ CostmapCalculatorComponent::CostmapCalculatorComponent(const rclcpp::NodeOptions
   combine_grid_map_pub_ = create_publisher<grid_map_msgs::msg::GridMap>("combine_grid_map", 1);
   cloud_buffer_ = boost::circular_buffer<sensor_msgs::msg::PointCloud2>(point_buffer_size_);
   scan_buffer_ = boost::circular_buffer<sensor_msgs::msg::LaserScan>(scan_buffer_size_);
-  map_data_ = boost::circular_buffer<grid_map::GridMap>(2);
 
   initGridMap();
 }
@@ -167,7 +166,8 @@ void CostmapCalculatorComponent::pointCloudCallback(
   combine_map.add("point_combined_layer", 0.0);
   combine_map.add("scan_combined_layer", 0.0);
   if (map.exists("point_layer1") && map.exists("scan_layer1")) {
-    combine_map["point_combined_layer"] = 0.6 * map["point_layer0"] + 0.4 * map["point_layer1"];
+    combine_map["point_combined_layer"] = currentpoint_downrate * map["point_layer0"] +
+                                          (1.0 - currentpoint_downrate) * map["point_layer1"];
     combine_map["scan_combined_layer"] = map["scan_layer0"] + scan_late * map["scan_layer1"];
   }
   auto combine_outputMessage = grid_map::GridMapRosConverter::toMessage(combine_map);
