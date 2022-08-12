@@ -78,7 +78,6 @@ extern "C" {
 #include <grid_map_ros/grid_map_ros.hpp>
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
-#include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/laser_scan.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
