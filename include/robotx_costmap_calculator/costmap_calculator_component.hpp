@@ -107,9 +107,9 @@ private:
   grid_map::GridMap map;
   void TransformScan(
     const sensor_msgs::msg::LaserScan & scan, const geometry_msgs::msg::PoseStamped & pose);
-  grid_map::Matrix getScanToGridMap(
+  void addScanToGridMap(
     const sensor_msgs::msg::LaserScan & scan, const std::string & scan_layer_name);
-  grid_map::Matrix getPointCloudToGridMap(
+  void addPointCloudToGridMap(
     const sensor_msgs::msg::PointCloud2 & cloud, const std::string & grid_map_layer_name);
   std::string points_raw_topic_;
   grid_map::Matrix grid_map_data_;

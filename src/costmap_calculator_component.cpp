@@ -129,7 +129,7 @@ void CostmapCalculatorComponent::scanCallback(const sensor_msgs::msg::LaserScan:
     std::stringstream ss;
     ss << j;
     std::string scan_layer_name("scan_layer" + ss.str());
-    map[scan_layer_name] = getScanToGridMap(scan_, scan_layer_name);
+    addScanToGridMap(scan_, scan_layer_name);
   }
   return;
 }
@@ -162,7 +162,7 @@ void CostmapCalculatorComponent::pointCloudCallback(
     }
     cloud_ss << i;
     std::string point_current_layer_name("point_layer" + cloud_ss.str());
-    map[point_current_layer_name] = getPointCloudToGridMap(cloud_, point_current_layer_name);
+    addPointCloudToGridMap(cloud_, point_current_layer_name);
   }
   combine_map.add("point_combined_layer", 0.0);
   combine_map.add("scan_combined_layer", 0.0);
@@ -197,7 +197,7 @@ void CostmapCalculatorComponent::TransformScan(
   }
 }
 
-grid_map::Matrix CostmapCalculatorComponent::getScanToGridMap(
+void CostmapCalculatorComponent::addScanToGridMap(
   const sensor_msgs::msg::LaserScan & scan, const std::string & scan_layer_name)
 {
   map.add(scan_layer_name, 0.0);
@@ -225,10 +225,9 @@ grid_map::Matrix CostmapCalculatorComponent::getScanToGridMap(
       map.at(scan_layer_name, *iterator) = 0.0;
     }
   }
-  return map[scan_layer_name];
 }
 
-grid_map::Matrix CostmapCalculatorComponent::getPointCloudToGridMap(
+void CostmapCalculatorComponent::addPointCloudToGridMap(
   const sensor_msgs::msg::PointCloud2 & cloud, const std::string & grid_map_layer_name)
 {
   map.add(grid_map_layer_name, 0.0);
@@ -258,7 +257,6 @@ grid_map::Matrix CostmapCalculatorComponent::getPointCloudToGridMap(
       map.at(grid_map_layer_name, *iterator) = sigmoid(1.0, 0.0, (double)num_points);
     }
   }
-  return map[grid_map_layer_name];
 }
 }  // namespace robotx_costmap_calculator
 
