@@ -58,14 +58,6 @@ extern "C" {
 }  // extern "
 #endif
 
-// Headers in ROS
-#include <pcl/PCLPointCloud2.h>
-#include <pcl/common/transforms.h>
-#include <pcl/filters/crop_hull.h>
-#include <pcl/filters/passthrough.h>
-#include <pcl/io/pcd_io.h>
-#include <pcl/point_types.h>
-#include <pcl_conversions/pcl_conversions.h>
 
 
 #include <grid_map_core/GridMap.hpp>
@@ -75,7 +67,7 @@ extern "C" {
 #include <pcl_apps_msgs/msg/polygon_array.hpp>
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
-
+#include <string>
 
 namespace robotx_costmap_calculator
 {
@@ -86,7 +78,9 @@ public:
   explicit CostmapToPolygonComponent(const rclcpp::NodeOptions & options);
 
 private:
-
+  rclcpp::Subscription<grid_map_msgs::msg::GridMap>::SharedPtr grid_map_sub_;
+  void gridmapCallback(const grid_map_msgs::msg::GridMap::SharedPtr msg);
+  std::unordered_map<double, double> position_map;
 };
 }  // namespace robotx_costmap_calculator
 

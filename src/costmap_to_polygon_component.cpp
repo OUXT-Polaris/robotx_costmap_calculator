@@ -15,6 +15,7 @@
 
 #include <chrono>
 #include <memory>
+#include <unordered_map>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_components/register_node_macro.hpp>
 #include <robotx_costmap_calculator/costmap_to_polygon_component.hpp>
@@ -26,11 +27,33 @@ namespace robotx_costmap_calculator
 CostmapToPolygonComponent::CostmapToPolygonComponent(const rclcpp::NodeOptions & options)
 : Node("robotx_costmap_to_polygon", options)
 {
+  std::string grid_map_topic;
+  declare_parameter<std::string>("grid_map_topic", "/perception/combine_grid_map");
+  get_parameter("grid_map_topic", grid_map_topic);
 
-
+  //subscriber
+  grid_map_sub_ = create_subscription<grid_map_msgs::msg::GridMap>(
+    grid_map_topic,1,
+    std::bind(&CostmapToPolygonComponent::gridmapCallback,this,std::placeholders::_1));
 }
 
-
+void CostmapToPolygonComponent::gridmapCallback(const grid_map_msgs::msg::GridMap::SharedPtr msg)
+{
+  grid_map::GridMap map;
+  grid_map::GridMapRosConverter::fromMessage(*msg,map);
+  for (grid_map::GridMapIterator iterator(map); !iterator.isPastEnd(); ++iterator) {
+    grid_map::Position position;
+    map.getPosition(*iterator, position);
+    grid_map::Index index;
+    if(!map.getIndex(position,index)){
+      return;
+    }
+    position_map.insert(std::make_pair(index(0),index(1))); //rows,cols
+  }
+  for(auto itr = position_map.begin(); itr != position_map.end(); ++itr) {
+    std::cout << "index0 = " << itr->first
+                      << ", index1 = " << itr->second << "\n";
+  }
+}
 }  // namespace robotx_costmap_calculator
-
 RCLCPP_COMPONENTS_REGISTER_NODE(robotx_costmap_calculator::CostmapToPolygonComponent)

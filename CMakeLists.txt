@@ -130,6 +130,11 @@ install(TARGETS
   DESTINATION lib/robotx_costmap_calculator
 )
 
+install(TARGETS
+  costmap_to_polygon_node
+  DESTINATION lib/robotx_costmap_calculator
+)
+
 install(TARGETS costmap_calculator_component 
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
