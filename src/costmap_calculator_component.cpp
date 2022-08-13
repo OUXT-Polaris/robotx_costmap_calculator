@@ -61,9 +61,8 @@ CostmapCalculatorComponent::CostmapCalculatorComponent(const rclcpp::NodeOptions
   double scan_late;
   declare_parameter("scan_late", 0.1);
   get_parameter("scan_late", scan_late);
-  float currentpoint_downlate;
-  declare_parameter("currentpoint_downlate", 0.6);
-  get_parameter("currentpoint_downlate", currentpoint_downlate);
+  declare_parameter("forgetting_rate", 0.6);
+  get_parameter("forgetting_rate", forgetting_rate_);
   std::string key;
   data_buffer =
     std::make_shared<data_buffer::PoseStampedDataBuffer>(get_clock(), key, buffer_length);
@@ -85,7 +84,6 @@ CostmapCalculatorComponent::CostmapCalculatorComponent(const rclcpp::NodeOptions
   combine_grid_map_pub_ = create_publisher<grid_map_msgs::msg::GridMap>("combine_grid_map", 1);
   cloud_buffer_ = boost::circular_buffer<sensor_msgs::msg::PointCloud2>(point_buffer_size_);
   scan_buffer_ = boost::circular_buffer<sensor_msgs::msg::LaserScan>(scan_buffer_size_);
-  map_data_ = boost::circular_buffer<grid_map::GridMap>(2);
 
   initGridMap();
 }
@@ -119,7 +117,7 @@ void CostmapCalculatorComponent::poseCallback(const geometry_msgs::msg::PoseStam
 void CostmapCalculatorComponent::scanCallback(const sensor_msgs::msg::LaserScan::SharedPtr scan)
 {
   scan_buffer_.push_back(*scan);
-  for (int j = 0; j < scan_buffer_.size(); j++) {
+  for (size_t j = 0; j < scan_buffer_.size(); j++) {
     sensor_msgs::msg::LaserScan scan_ = scan_buffer_[j];
     if (j > 0) {
       geometry_msgs::msg::PoseStamped scan_poses;
@@ -129,7 +127,7 @@ void CostmapCalculatorComponent::scanCallback(const sensor_msgs::msg::LaserScan:
     std::stringstream ss;
     ss << j;
     std::string scan_layer_name("scan_layer" + ss.str());
-    map[scan_layer_name] = getScanToGridMap(scan_, scan_layer_name);
+    addScanToGridMap(scan_, scan_layer_name);
   }
   return;
 }
@@ -138,7 +136,7 @@ void CostmapCalculatorComponent::pointCloudCallback(
   const sensor_msgs::msg::PointCloud2::SharedPtr cloud)
 {
   cloud_buffer_.push_back(*cloud);
-  for (int i = 0; i < cloud_buffer_.size(); i++) {
+  for (size_t i = 0; i < cloud_buffer_.size(); i++) {
     sensor_msgs::msg::PointCloud2 cloud_ = cloud_buffer_[i];
     std::stringstream cloud_ss;
     if (i > 0) {
@@ -162,12 +160,13 @@ void CostmapCalculatorComponent::pointCloudCallback(
     }
     cloud_ss << i;
     std::string point_current_layer_name("point_layer" + cloud_ss.str());
-    map[point_current_layer_name] = getPointCloudToGridMap(cloud_, point_current_layer_name);
+    addPointCloudToGridMap(cloud_, point_current_layer_name);
   }
   combine_map.add("point_combined_layer", 0.0);
   combine_map.add("scan_combined_layer", 0.0);
   if (map.exists("point_layer1") && map.exists("scan_layer1")) {
-    combine_map["point_combined_layer"] = 0.6 * map["point_layer0"] + 0.4 * map["point_layer1"];
+    combine_map["point_combined_layer"] =
+      forgetting_rate_ * map["point_layer0"] + (1.0 - forgetting_rate_) * map["point_layer1"];
     combine_map["scan_combined_layer"] = map["scan_layer0"] + scan_late * map["scan_layer1"];
   }
   auto combine_outputMessage = grid_map::GridMapRosConverter::toMessage(combine_map);
@@ -197,7 +196,7 @@ void CostmapCalculatorComponent::TransformScan(
   }
 }
 
-grid_map::Matrix CostmapCalculatorComponent::getScanToGridMap(
+void CostmapCalculatorComponent::addScanToGridMap(
   const sensor_msgs::msg::LaserScan & scan, const std::string & scan_layer_name)
 {
   map.add(scan_layer_name, 0.0);
@@ -225,10 +224,9 @@ grid_map::Matrix CostmapCalculatorComponent::getScanToGridMap(
       map.at(scan_layer_name, *iterator) = 0.0;
     }
   }
-  return map[scan_layer_name];
 }
 
-grid_map::Matrix CostmapCalculatorComponent::getPointCloudToGridMap(
+void CostmapCalculatorComponent::addPointCloudToGridMap(
   const sensor_msgs::msg::PointCloud2 & cloud, const std::string & grid_map_layer_name)
 {
   map.add(grid_map_layer_name, 0.0);
@@ -258,7 +256,6 @@ grid_map::Matrix CostmapCalculatorComponent::getPointCloudToGridMap(
       map.at(grid_map_layer_name, *iterator) = sigmoid(1.0, 0.0, (double)num_points);
     }
   }
-  return map[grid_map_layer_name];
 }
 }  // namespace robotx_costmap_calculator
 
