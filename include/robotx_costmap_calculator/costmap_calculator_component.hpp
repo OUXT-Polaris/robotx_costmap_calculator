@@ -125,7 +125,7 @@ private:
   double range_max_;
   float point_late;
   double scan_late;
-  float currentpoint_downrate;
+  double forgetting_rate_;
   std::string visualize_frame_id_;
   std::shared_ptr<data_buffer::PoseStampedDataBuffer> data_buffer;
 };

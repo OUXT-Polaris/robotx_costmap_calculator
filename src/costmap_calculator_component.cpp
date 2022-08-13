@@ -61,9 +61,8 @@ CostmapCalculatorComponent::CostmapCalculatorComponent(const rclcpp::NodeOptions
   double scan_late;
   declare_parameter("scan_late", 0.1);
   get_parameter("scan_late", scan_late);
-  float currentpoint_downrate;
-  declare_parameter("currentpoint_downrate", 0.6);
-  get_parameter("currentpoint_downrate", currentpoint_downrate);
+  declare_parameter("forgetting_rate", 0.6);
+  get_parameter("forgetting_rate", forgetting_rate_);
   std::string key;
   data_buffer =
     std::make_shared<data_buffer::PoseStampedDataBuffer>(get_clock(), key, buffer_length);
@@ -166,8 +165,8 @@ void CostmapCalculatorComponent::pointCloudCallback(
   combine_map.add("point_combined_layer", 0.0);
   combine_map.add("scan_combined_layer", 0.0);
   if (map.exists("point_layer1") && map.exists("scan_layer1")) {
-    combine_map["point_combined_layer"] = currentpoint_downrate * map["point_layer0"] +
-                                          (1.0 - currentpoint_downrate) * map["point_layer1"];
+    combine_map["point_combined_layer"] =
+      forgetting_rate_ * map["point_layer0"] + (1.0 - forgetting_rate_) * map["point_layer1"];
     combine_map["scan_combined_layer"] = map["scan_layer0"] + scan_late * map["scan_layer1"];
   }
   auto combine_outputMessage = grid_map::GridMapRosConverter::toMessage(combine_map);
