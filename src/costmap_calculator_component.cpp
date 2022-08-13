@@ -164,7 +164,7 @@ void CostmapCalculatorComponent::pointCloudCallback(
   if (map.exists("point_layer1") && map.exists("scan_layer1")) {
     combine_map["point_combined_layer"] =
       forgetting_rate_ * map["point_layer0"] + (1.0 - forgetting_rate_) * map["point_layer1"];
-    combine_map["scan_combined_layer"] = map["scan_layer0"] + scan_late * map["scan_layer1"];
+    combine_map["scan_combined_layer"] = map["scan_layer0"] + scan_rate * map["scan_layer1"];
   }
   auto getObstacle_polygon(combine_map);
   auto combine_outputMessage = grid_map::GridMapRosConverter::toMessage(combine_map);
