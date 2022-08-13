@@ -53,8 +53,8 @@ CostmapCalculatorComponent::CostmapCalculatorComponent(const rclcpp::NodeOptions
   get_parameter("range_max", range_max_);
   declare_parameter("visualize_frame_id", "map");
   get_parameter("visualize_frame_id", visualize_frame_id_);
-  declare_parameter("buffer_length", 2.0);
   double buffer_length;
+  declare_parameter("buffer_length", 5.0);
   get_parameter("buffer_length", buffer_length);
   declare_parameter("scan_buffer_size", 2);
   get_parameter("scan_buffer_size", scan_buffer_size_);
@@ -119,16 +119,14 @@ void CostmapCalculatorComponent::scanCallback(const sensor_msgs::msg::LaserScan:
     std::stringstream ss;
     ss << j;
     std::string scan_layer_name("scan_layer" + ss.str());
-    if (j == 0) {
+    if (j == scan_buffer_.size() - 1) {
       addPointsToGridMap(transformScanPoints(*scan_buffer_[j]), scan_layer_name);
-      // addScanToGridMap(*scan_buffer_[j], scan_layer_name);
     } else {
       geometry_msgs::msg::PoseStamped prev_scan_pose;
-      pose_buffer_->queryData(scan->header.stamp, prev_scan_pose);
+      pose_buffer_->queryData(scan_buffer_[j]->header.stamp, prev_scan_pose);
       addPointsToGridMap(
         transformScanPoints(*scan_buffer_[j], getRelativePose(scan_pose.pose, prev_scan_pose.pose)),
         scan_layer_name);
-      // addScanToGridMap(*scan_buffer_[j], scan_layer_name);
     }
   }
   publish();
@@ -308,7 +306,6 @@ const geometry_msgs::msg::Pose CostmapCalculatorComponent::getRelativePose(
   {
     tf2::toMsg(tf_delta, ret);
   }
-
   return ret;
 }
 }  // namespace robotx_costmap_calculator
