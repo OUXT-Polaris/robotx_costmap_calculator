@@ -107,7 +107,6 @@ double sigmoid(double a, double b, double x)
 
 void CostmapCalculatorComponent::poseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr pose)
 {
-  pose_data = *pose;
   data_buffer->addData(pose_data);
   return;
 }
@@ -169,7 +168,7 @@ void CostmapCalculatorComponent::pointCloudCallback(
       geometry_msgs::msg::PoseStamped poses;
       data_buffer->queryData(cloud->header.stamp, poses);
       Eigen::Matrix3d rotation_matrix;
-      geometry_msgs::msg::Quaternion current_pose_orientation = pose_data.pose.orientation;
+      geometry_msgs::msg::Quaternion current_pose_orientation = poses.pose.orientation;
       geometry_msgs::msg::Quaternion scan_orientation;
       scan_orientation =
         quaternion_operation::getRotation(poses.pose.orientation, current_pose_orientation);

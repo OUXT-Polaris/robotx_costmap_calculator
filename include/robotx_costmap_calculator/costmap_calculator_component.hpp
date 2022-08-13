@@ -109,13 +109,7 @@ private:
     const sensor_msgs::msg::LaserScan & scan, const std::string & scan_layer_name);
   void addPointCloudToGridMap(
     const sensor_msgs::msg::PointCloud2 & cloud, const std::string & grid_map_layer_name);
-  std::string points_raw_topic_;
-  std::string laserscan_raw_topic_;
   std::string output_topic_;
-  std::string current_pose_topic;
-  geometry_msgs::msg::PoseStamped pose_data;
-  geometry_msgs::msg::PoseStamped new_pose;
-  geometry_msgs::msg::PoseStamped interpolation_pose;
   double update_rate_;
   double resolution_;
   double laser_resolution_;
