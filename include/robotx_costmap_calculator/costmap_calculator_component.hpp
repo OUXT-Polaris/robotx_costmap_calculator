@@ -102,7 +102,7 @@ private:
   boost::circular_buffer<sensor_msgs::msg::LaserScan::SharedPtr> scan_buffer_;
   grid_map::GridMap grid_map;
   std::vector<geometry_msgs::msg::Point> transformScanPoints(
-    const sensor_msgs::msg::LaserScan & scan, const geometry_msgs::msg::PoseStamped & pose) const;
+    const sensor_msgs::msg::LaserScan & scan, const geometry_msgs::msg::Pose & pose) const;
   void addScanToGridMap(
     const sensor_msgs::msg::LaserScan & scan, const std::string & scan_layer_name);
   void addPointCloudToGridMap(
@@ -122,6 +122,8 @@ private:
   size_t scan_buffer_size_;
   std::string visualize_frame_id_;
   std::shared_ptr<data_buffer::PoseStampedDataBuffer> pose_buffer_;
+  const geometry_msgs::msg::Pose getRelativePose(
+    const geometry_msgs::msg::Pose & from, const geometry_msgs::msg::Pose & to) const;
 };
 }  // namespace robotx_costmap_calculator
 

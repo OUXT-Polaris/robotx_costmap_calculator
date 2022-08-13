@@ -13,15 +13,22 @@
 // limitations under the License.
 
 #include <quaternion_operation/quaternion_operation.h>
+#include <tf2/LinearMath/Quaternion.h>
 
 #include <chrono>
 #include <data_buffer/data_buffer_base.hpp>
+#include <geometry_msgs/msg/transform.hpp>
 #include <grid_map_ros/GridMapRosConverter.hpp>
 #include <memory>
 #include <rclcpp_components/register_node_macro.hpp>
 #include <robotx_costmap_calculator/costmap_calculator_component.hpp>
 #include <string>
 #include <vector>
+#ifdef USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#else
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#endif
 
 namespace robotx_costmap_calculator
 {
@@ -107,25 +114,27 @@ void CostmapCalculatorComponent::scanCallback(const sensor_msgs::msg::LaserScan:
 {
   scan_buffer_.push_back(scan);
   for (size_t j = 0; j < scan_buffer_.size(); j++) {
-    if (j > 0) {
-      geometry_msgs::msg::PoseStamped scan_pose;
-      pose_buffer_->queryData(scan->header.stamp, scan_pose);
-    }
+    geometry_msgs::msg::PoseStamped scan_pose;
+    pose_buffer_->queryData(scan->header.stamp, scan_pose);
     std::stringstream ss;
     ss << j;
     std::string scan_layer_name("scan_layer" + ss.str());
-    addScanToGridMap(*scan_buffer_[j], scan_layer_name);
+    if (j == 0) {
+      addScanToGridMap(*scan_buffer_[j], scan_layer_name);
+    } else {
+      addScanToGridMap(*scan_buffer_[j], scan_layer_name);
+    }
   }
   publish();
   return;
 }
 
 std::vector<geometry_msgs::msg::Point> CostmapCalculatorComponent::transformScanPoints(
-  const sensor_msgs::msg::LaserScan & scan, const geometry_msgs::msg::PoseStamped & pose) const
+  const sensor_msgs::msg::LaserScan & scan, const geometry_msgs::msg::Pose & pose) const
 {
   std::vector<geometry_msgs::msg::Point> ret;
   Eigen::Matrix3d scan_rotation_matrix;
-  scan_rotation_matrix = quaternion_operation::getRotationMatrix(pose.pose.orientation);
+  scan_rotation_matrix = quaternion_operation::getRotationMatrix(pose.orientation);
   for (int i = 0; i < static_cast<int>(scan.ranges.size()); i++) {
     if (range_max_ >= scan.ranges[i]) {
       double theta = scan.angle_min + scan.angle_increment * static_cast<double>(i);
@@ -134,9 +143,9 @@ std::vector<geometry_msgs::msg::Point> CostmapCalculatorComponent::transformScan
       v(1) = scan.ranges[i] * std::sin(theta);
       v(2) = 0;
       v = scan_rotation_matrix * v;
-      v(0) = v(0) + pose.pose.position.x;
-      v(1) = v(1) + pose.pose.position.y;
-      v(2) = v(2) + pose.pose.position.z;
+      v(0) = v(0) + pose.position.x;
+      v(1) = v(1) + pose.position.y;
+      v(2) = v(2) + pose.position.z;
       geometry_msgs::msg::Point transformed;
       transformed.x = v(0);
       transformed.y = v(1);
@@ -267,6 +276,45 @@ void CostmapCalculatorComponent::addPointCloudToGridMap(
       grid_map.at(grid_map_layer_name, *iterator) = sigmoid(1.0, 0.0, (double)num_points);
     }
   }
+}
+
+const geometry_msgs::msg::Pose CostmapCalculatorComponent::getRelativePose(
+  const geometry_msgs::msg::Pose & from, const geometry_msgs::msg::Pose & to) const
+{
+  geometry_msgs::msg::Transform from_translation;
+  {
+    from_translation.translation.x = from.position.x;
+    from_translation.translation.y = from.position.y;
+    from_translation.translation.z = from.position.z;
+    from_translation.rotation = from.orientation;
+  }
+
+  tf2::Transform from_tf;
+  {
+    tf2::fromMsg(from_translation, from_tf);
+  }
+
+  geometry_msgs::msg::Transform to_translation;
+  {
+    to_translation.translation.x = to.position.x;
+    to_translation.translation.y = to.position.y;
+    to_translation.translation.z = to.position.z;
+    to_translation.rotation = to.orientation;
+  }
+
+  tf2::Transform to_tf;
+  {
+    tf2::fromMsg(to_translation, to_tf);
+  }
+
+  tf2::Transform tf_delta = from_tf.inverse() * to_tf;
+
+  geometry_msgs::msg::Pose ret;
+  {
+    tf2::toMsg(tf_delta, ret);
+  }
+
+  return ret;
 }
 }  // namespace robotx_costmap_calculator
 
