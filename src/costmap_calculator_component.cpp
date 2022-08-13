@@ -183,7 +183,7 @@ void CostmapCalculatorComponent::pointCloudCallback(
 void CostmapCalculatorComponent::publish()
 {
   auto msg = grid_map::GridMapRosConverter::toMessage(grid_map);
-  msg->header.stamp = get_clock().now();
+  msg->header.stamp = get_clock()->now();
   grid_map_pub_->publish(std::move(msg));
 }
 
