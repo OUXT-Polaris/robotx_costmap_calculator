@@ -98,8 +98,8 @@ private:
   void pointCloudCallback(const sensor_msgs::msg::PointCloud2::SharedPtr cloud);
   void scanCallback(const sensor_msgs::msg::LaserScan::SharedPtr scan);
   void poseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr pose);
-  boost::circular_buffer<sensor_msgs::msg::PointCloud2> cloud_buffer_;
-  boost::circular_buffer<sensor_msgs::msg::LaserScan> scan_buffer_;
+  boost::circular_buffer<sensor_msgs::msg::PointCloud2::SharedPtr> cloud_buffer_;
+  boost::circular_buffer<sensor_msgs::msg::LaserScan::SharedPtr> scan_buffer_;
   grid_map::GridMap map;
   std::vector<geometry_msgs::msg::Point> transformScanPoints(
     const sensor_msgs::msg::LaserScan & scan, const geometry_msgs::msg::PoseStamped & pose) const;
@@ -118,7 +118,7 @@ private:
   double forgetting_rate_;
   bool use_scan_;
   std::string visualize_frame_id_;
-  std::shared_ptr<data_buffer::PoseStampedDataBuffer> data_buffer;
+  std::shared_ptr<data_buffer::PoseStampedDataBuffer> pose_buffer_;
 };
 }  // namespace robotx_costmap_calculator
 
