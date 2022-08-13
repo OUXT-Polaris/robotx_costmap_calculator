@@ -130,6 +130,7 @@ ament_auto_add_executable(costmap_to_polygon_node
 rclcpp_components_register_nodes(costmap_to_polygon_component
  "robotx_costmap_calculator::CostmapToPolygonComponent")
 
+# costmap_filter_component
 ament_auto_add_library(costmap_filter_component SHARED
   src/costmap_filter_component.cpp)
 
@@ -140,6 +141,16 @@ ament_auto_add_executable(costmap_filter_node
   src/costmap_filter_node.cpp
 )
 
+# costmap_interpolation_component
+ament_auto_add_library(costmap_interpolation_component SHARED
+  src/costmap_interpolation_component.cpp)
+
+target_compile_definitions(costmap_interpolation_component
+  PRIVATE "COSTMAP_INTERPOLATION_COMPONENT_BUILDING_DLL")
+
+ament_auto_add_executable(costmap_interpolation_node
+  src/costmap_interpolation_node.cpp
+)
 
 
  foreach(target ${target_list})
