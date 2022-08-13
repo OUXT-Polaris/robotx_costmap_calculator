@@ -79,7 +79,6 @@ CostmapCalculatorComponent::CostmapCalculatorComponent(const rclcpp::NodeOptions
 
   grid_map_pub_ = create_publisher<grid_map_msgs::msg::GridMap>("grid_map", 1);
 
-  combine_grid_map_pub_ = create_publisher<grid_map_msgs::msg::GridMap>("combine_grid_map", 1);
   cloud_buffer_ = boost::circular_buffer<sensor_msgs::msg::PointCloud2>(point_buffer_size_);
   scan_buffer_ = boost::circular_buffer<sensor_msgs::msg::LaserScan>(scan_buffer_size_);
 
@@ -90,10 +89,6 @@ void CostmapCalculatorComponent::initGridMap()
 {
   map.setFrameId("base_link");
   map.setGeometry(
-    grid_map::Length(resolution_ * num_grids_, resolution_ * num_grids_), resolution_,
-    grid_map::Position(0.0, 0.0));
-  combine_map.setFrameId("base_link");
-  combine_map.setGeometry(
     grid_map::Length(resolution_ * num_grids_, resolution_ * num_grids_), resolution_,
     grid_map::Position(0.0, 0.0));
 }
@@ -107,7 +102,7 @@ double sigmoid(double a, double b, double x)
 
 void CostmapCalculatorComponent::poseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr pose)
 {
-  data_buffer->addData(pose_data);
+  data_buffer->addData(*pose);
   return;
 }
 
@@ -185,6 +180,7 @@ void CostmapCalculatorComponent::pointCloudCallback(
     std::string point_current_layer_name("point_layer" + cloud_ss.str());
     addPointCloudToGridMap(cloud_, point_current_layer_name);
   }
+  /*
   combine_map.add("point_combined_layer", 0.0);
   combine_map.add("scan_combined_layer", 0.0);
   if (map.exists("point_layer1") && map.exists("scan_layer1")) {
@@ -197,6 +193,7 @@ void CostmapCalculatorComponent::pointCloudCallback(
   auto output_message = grid_map::GridMapRosConverter::toMessage(map);
   grid_map_pub_->publish(std::move(output_message));
   combine_grid_map_pub_->publish(std::move(combine_output_message));
+  */
   return;
 }
 

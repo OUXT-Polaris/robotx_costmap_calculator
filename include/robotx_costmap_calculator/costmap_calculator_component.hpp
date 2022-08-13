@@ -91,7 +91,6 @@ public:
 
 private:
   rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr grid_map_pub_;
-  rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr combine_grid_map_pub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_sub_;
   rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr laserscan_sub_;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr pose_sub_;
@@ -101,7 +100,6 @@ private:
   void poseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr pose);
   boost::circular_buffer<sensor_msgs::msg::PointCloud2> cloud_buffer_;
   boost::circular_buffer<sensor_msgs::msg::LaserScan> scan_buffer_;
-  grid_map::GridMap combine_map;
   grid_map::GridMap map;
   std::vector<geometry_msgs::msg::Point> transformScanPoints(
     const sensor_msgs::msg::LaserScan & scan, const geometry_msgs::msg::PoseStamped & pose) const;
