@@ -114,7 +114,9 @@ void CostmapCalculatorComponent::scanCallback(const sensor_msgs::msg::LaserScan:
 {
   scan_buffer_.push_back(scan);
   geometry_msgs::msg::PoseStamped scan_pose;
-  pose_buffer_->queryData(scan->header.stamp, scan_pose);
+  if (!pose_buffer_->queryData(scan->header.stamp, scan_pose)) {
+    return;
+  }
   for (size_t j = 0; j < scan_buffer_.size(); j++) {
     std::stringstream ss;
     ss << j;
@@ -123,12 +125,15 @@ void CostmapCalculatorComponent::scanCallback(const sensor_msgs::msg::LaserScan:
       addPointsToGridMap(transformScanPoints(*scan_buffer_[j]), scan_layer_name);
     } else {
       geometry_msgs::msg::PoseStamped prev_scan_pose;
-      pose_buffer_->queryData(scan_buffer_[j]->header.stamp, prev_scan_pose);
+      if (!pose_buffer_->queryData(scan_buffer_[j]->header.stamp, prev_scan_pose)) {
+        return;
+      }
       addPointsToGridMap(
         transformScanPoints(*scan_buffer_[j], getRelativePose(scan_pose.pose, prev_scan_pose.pose)),
         scan_layer_name);
     }
   }
+  combine();
   publish();
   return;
 }
@@ -170,7 +175,9 @@ void CostmapCalculatorComponent::pointCloudCallback(
       pcl::PointCloud<pcl::PointXYZ>::Ptr transform_cloud(new pcl::PointCloud<pcl::PointXYZ>());
       pcl::fromROSMsg(*cloud_buffer_[i], *transform_cloud);
       geometry_msgs::msg::PoseStamped poses;
-      pose_buffer_->queryData(cloud->header.stamp, poses);
+      if (!pose_buffer_->queryData(cloud->header.stamp, poses)) {
+        return;
+      }
       Eigen::Matrix3d rotation_matrix;
       geometry_msgs::msg::Quaternion current_pose_orientation = poses.pose.orientation;
       geometry_msgs::msg::Quaternion scan_orientation;
@@ -189,6 +196,7 @@ void CostmapCalculatorComponent::pointCloudCallback(
     std::string point_current_layer_name("point_layer" + cloud_ss.str());
     addPointCloudToGridMap(*cloud_buffer_[i], point_current_layer_name);
   }
+  combine();
   publish();
   return;
 }
