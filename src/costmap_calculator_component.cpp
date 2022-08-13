@@ -116,7 +116,7 @@ void CostmapCalculatorComponent::scanCallback(const sensor_msgs::msg::LaserScan:
     std::string scan_layer_name("scan_layer" + ss.str());
     addScanToGridMap(*scan_buffer_[j], scan_layer_name);
   }
-  grid_map_pub_->publish(std::move(grid_map::GridMapRosConverter::toMessage(grid_map)));
+  publish();
   return;
 }
 
@@ -176,8 +176,15 @@ void CostmapCalculatorComponent::pointCloudCallback(
     std::string point_current_layer_name("point_layer" + cloud_ss.str());
     addPointCloudToGridMap(*cloud_buffer_[i], point_current_layer_name);
   }
-  grid_map_pub_->publish(std::move(grid_map::GridMapRosConverter::toMessage(grid_map)));
+  publish();
   return;
+}
+
+void CostmapCalculatorComponent::publish()
+{
+  auto msg = grid_map::GridMapRosConverter::toMessage(grid_map);
+  msg->header.stamp = get_clock().now();
+  grid_map_pub_->publish(std::move(msg));
 }
 
 void CostmapCalculatorComponent::combine()

@@ -108,6 +108,7 @@ private:
   void addPointCloudToGridMap(
     const sensor_msgs::msg::PointCloud2 & cloud, const std::string & grid_map_layer_name);
   void combine();
+  void publish();
   std::string output_topic_;
   double update_rate_;
   double resolution_;
