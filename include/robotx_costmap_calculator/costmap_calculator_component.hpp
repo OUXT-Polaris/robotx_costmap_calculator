@@ -100,7 +100,7 @@ private:
   void poseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr pose);
   boost::circular_buffer<sensor_msgs::msg::PointCloud2::SharedPtr> cloud_buffer_;
   boost::circular_buffer<sensor_msgs::msg::LaserScan::SharedPtr> scan_buffer_;
-  grid_map::GridMap grid_map;
+  grid_map::GridMap grid_map_;
   std::vector<geometry_msgs::msg::Point> transformScanPoints(
     const sensor_msgs::msg::LaserScan & scan,
     const geometry_msgs::msg::Pose & pose = geometry_msgs::msg::Pose()) const;

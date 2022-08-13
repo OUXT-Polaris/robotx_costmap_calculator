@@ -91,8 +91,8 @@ CostmapCalculatorComponent::CostmapCalculatorComponent(const rclcpp::NodeOptions
 
 void CostmapCalculatorComponent::initGridMap()
 {
-  grid_map.setFrameId("base_link");
-  grid_map.setGeometry(
+  grid_map_.setFrameId("base_link");
+  grid_map_.setGeometry(
     grid_map::Length(resolution_ * num_grids_, resolution_ * num_grids_), resolution_,
     grid_map::Position(0.0, 0.0));
 }
@@ -195,26 +195,26 @@ void CostmapCalculatorComponent::pointCloudCallback(
 
 void CostmapCalculatorComponent::publish()
 {
-  auto msg = grid_map::GridMapRosConverter::toMessage(grid_map);
+  auto msg = grid_map::GridMapRosConverter::toMessage(grid_map_);
   msg->header.stamp = get_clock()->now();
   grid_map_pub_->publish(std::move(msg));
 }
 
 void CostmapCalculatorComponent::combine()
 {
-  grid_map.add("combined", 0.0);
+  grid_map_.add("combined", 0.0);
   if (use_scan_) {
     if (scan_buffer_.size() == scan_buffer_size_) {
       for (size_t i = 0; i < scan_buffer_size_; i++) {
-        grid_map["combined"] =
-          std::pow(forgetting_rate_, i - 1) * grid_map["scan_layer" + std::to_string(i)];
+        grid_map_["combined"] =
+          std::pow(forgetting_rate_, i - 1) * grid_map_["scan_layer" + std::to_string(i)];
       }
     }
   } else {
     if (cloud_buffer_.size() == scan_buffer_size_) {
       for (size_t i = 0; i < scan_buffer_size_; i++) {
-        grid_map["combined"] =
-          std::pow(forgetting_rate_, i - 1) * grid_map["point_layer" + std::to_string(i)];
+        grid_map_["combined"] =
+          std::pow(forgetting_rate_, i - 1) * grid_map_["point_layer" + std::to_string(i)];
       }
     }
   }
@@ -223,16 +223,16 @@ void CostmapCalculatorComponent::combine()
 void CostmapCalculatorComponent::addPointsToGridMap(
   const std::vector<geometry_msgs::msg::Point> & points, const std::string & scan_layer_name)
 {
-  grid_map.add(scan_layer_name, 0.0);
-  for (const auto point : points) {
+  grid_map_.add(scan_layer_name, 0.0);
+  for (const auto & point : points) {
     for (grid_map::CircleIterator iterator(
-           grid_map, grid_map::Position(point.x, point.y), resolution_ * 0.5);
+           grid_map_, grid_map::Position(point.x, point.y), resolution_ * 0.5);
          !iterator.isPastEnd(); ++iterator) {
-      if (std::isnan(grid_map.at(scan_layer_name, *iterator))) {
-        grid_map.at(scan_layer_name, *iterator) = 0.0;
+      if (std::isnan(grid_map_.at(scan_layer_name, *iterator))) {
+        grid_map_.at(scan_layer_name, *iterator) = 0.0;
       } else {
-        if (grid_map.at(scan_layer_name, *iterator) < 1.0) {
-          grid_map.at(scan_layer_name, *iterator) = grid_map.at(scan_layer_name, *iterator) + 0.1;
+        if (grid_map_.at(scan_layer_name, *iterator) < 1.0) {
+          grid_map_.at(scan_layer_name, *iterator) = grid_map_.at(scan_layer_name, *iterator) + 0.1;
         }
       }
     }
@@ -242,14 +242,14 @@ void CostmapCalculatorComponent::addPointsToGridMap(
 void CostmapCalculatorComponent::addPointCloudToGridMap(
   const sensor_msgs::msg::PointCloud2 & cloud, const std::string & grid_map_layer_name)
 {
-  grid_map.add(grid_map_layer_name, 0.0);
+  grid_map_.add(grid_map_layer_name, 0.0);
   pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_cloud(new pcl::PointCloud<pcl::PointXYZ>());
   pcl::fromROSMsg(cloud, *pcl_cloud);
   pcl::PassThrough<pcl::PointXYZ> pass;
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered(new pcl::PointCloud<pcl::PointXYZ>());
-  for (grid_map::GridMapIterator iterator(grid_map); !iterator.isPastEnd(); ++iterator) {
+  for (grid_map::GridMapIterator iterator(grid_map_); !iterator.isPastEnd(); ++iterator) {
     grid_map::Position position;
-    grid_map.getPosition(*iterator, position);
+    grid_map_.getPosition(*iterator, position);
     double x_min = position.x() - (resolution_ * 0.5);
     double x_max = position.x() + (resolution_ * 0.5);
     double y_min = position.y() - (resolution_ * 0.5);
@@ -264,9 +264,9 @@ void CostmapCalculatorComponent::addPointCloudToGridMap(
     pass.filter(*cloud_filtered);
     int num_points = cloud_filtered->size();
     if (num_points == 0) {
-      grid_map.at(grid_map_layer_name, *iterator) = 0.0;
+      grid_map_.at(grid_map_layer_name, *iterator) = 0.0;
     } else {
-      grid_map.at(grid_map_layer_name, *iterator) = sigmoid(1.0, 0.0, (double)num_points);
+      grid_map_.at(grid_map_layer_name, *iterator) = sigmoid(1.0, 0.0, (double)num_points);
     }
   }
 }
