@@ -110,9 +110,9 @@ private:
   void costmapToObstaclePolygon(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
   void TransformScan(
     const sensor_msgs::msg::LaserScan & scan, const geometry_msgs::msg::PoseStamped & pose);
-  grid_map::Matrix getScanToGridMap(
+  void addScanToGridMap(
     const sensor_msgs::msg::LaserScan & scan, const std::string & scan_layer_name);
-  grid_map::Matrix getPointCloudToGridMap(
+  void addPointCloudToGridMap(
     const sensor_msgs::msg::PointCloud2 & cloud, const std::string & grid_map_layer_name);
   std::string points_raw_topic_;
   std::string laserscan_raw_topic_;
@@ -128,11 +128,9 @@ private:
   int num_grids_;
   int laser_num_grids_;
   double range_max_;
-  float point_late;
-  double scan_late;
-  float currentpoint_downlate;
-  std_msgs::msg::Header header;
-  sensor_msgs::msg::Image img_msg;
+  float point_rate;
+  double scan_rate;
+  double forgetting_rate_;
   std::string visualize_frame_id_;
   std::shared_ptr<data_buffer::PoseStampedDataBuffer> data_buffer;
 };
