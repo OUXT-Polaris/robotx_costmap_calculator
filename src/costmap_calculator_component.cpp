@@ -55,25 +55,23 @@ CostmapCalculatorComponent::CostmapCalculatorComponent(const rclcpp::NodeOptions
   int scan_buffer_size_;
   declare_parameter("scan_buffer_size_", 2);
   get_parameter("scan_buffer_size_", scan_buffer_size_);
-  float point_late;
-  declare_parameter("point_late", 0.5);
-  get_parameter("point_late", point_late);
-  double scan_late;
-  declare_parameter("scan_late", 0.1);
-  get_parameter("scan_late", scan_late);
   declare_parameter("forgetting_rate", 0.6);
   get_parameter("forgetting_rate", forgetting_rate_);
+  declare_parameter<bool>("use_scan", true);
+  get_parameter("use_scan", use_scan_);
   std::string key;
   data_buffer =
     std::make_shared<data_buffer::PoseStampedDataBuffer>(get_clock(), key, buffer_length);
 
-  pointcloud_sub_ = create_subscription<sensor_msgs::msg::PointCloud2>(
-    points_raw_topic, 10,
-    std::bind(&CostmapCalculatorComponent::pointCloudCallback, this, std::placeholders::_1));
-
-  laserscan_sub_ = create_subscription<sensor_msgs::msg::LaserScan>(
-    laserscan_raw_topic, 10,
-    std::bind(&CostmapCalculatorComponent::scanCallback, this, std::placeholders::_1));
+  if (use_scan_) {
+    laserscan_sub_ = create_subscription<sensor_msgs::msg::LaserScan>(
+      laserscan_raw_topic, 10,
+      std::bind(&CostmapCalculatorComponent::scanCallback, this, std::placeholders::_1));
+  } else {
+    pointcloud_sub_ = create_subscription<sensor_msgs::msg::PointCloud2>(
+      points_raw_topic, 10,
+      std::bind(&CostmapCalculatorComponent::pointCloudCallback, this, std::placeholders::_1));
+  }
 
   pose_sub_ = create_subscription<geometry_msgs::msg::PoseStamped>(
     current_pose_topic, 10,
@@ -120,9 +118,8 @@ void CostmapCalculatorComponent::scanCallback(const sensor_msgs::msg::LaserScan:
   for (size_t j = 0; j < scan_buffer_.size(); j++) {
     sensor_msgs::msg::LaserScan scan_ = scan_buffer_[j];
     if (j > 0) {
-      geometry_msgs::msg::PoseStamped scan_poses;
-      data_buffer->queryData(scan->header.stamp, scan_poses);
-      TransformScan(scan_, scan_poses);
+      geometry_msgs::msg::PoseStamped scan_pose;
+      data_buffer->queryData(scan->header.stamp, scan_pose);
     }
     std::stringstream ss;
     ss << j;
@@ -130,6 +127,33 @@ void CostmapCalculatorComponent::scanCallback(const sensor_msgs::msg::LaserScan:
     addScanToGridMap(scan_, scan_layer_name);
   }
   return;
+}
+
+std::vector<geometry_msgs::msg::Point> CostmapCalculatorComponent::transformScanPoints(
+  const sensor_msgs::msg::LaserScan & scan, const geometry_msgs::msg::PoseStamped & pose) const
+{
+  std::vector<geometry_msgs::msg::Point> ret;
+  Eigen::Matrix3d scan_rotation_matrix;
+  scan_rotation_matrix = quaternion_operation::getRotationMatrix(pose.pose.orientation);
+  for (int i = 0; i < static_cast<int>(scan.ranges.size()); i++) {
+    if (range_max_ >= scan.ranges[i]) {
+      double theta = scan.angle_min + scan.angle_increment * static_cast<double>(i);
+      Eigen::VectorXd v(3);
+      v(0) = scan.ranges[i] * std::cos(theta);
+      v(1) = scan.ranges[i] * std::sin(theta);
+      v(2) = 0;
+      v = scan_rotation_matrix * v;
+      v(0) = v(0) + pose.pose.position.x;
+      v(1) = v(1) + pose.pose.position.y;
+      v(2) = v(2) + pose.pose.position.z;
+      geometry_msgs::msg::Point transformed;
+      transformed.x = v(0);
+      transformed.y = v(1);
+      transformed.z = v(2);
+      ret.emplace_back(transformed);
+    }
+  }
+  return ret;
 }
 
 void CostmapCalculatorComponent::pointCloudCallback(
@@ -167,33 +191,14 @@ void CostmapCalculatorComponent::pointCloudCallback(
   if (map.exists("point_layer1") && map.exists("scan_layer1")) {
     combine_map["point_combined_layer"] =
       forgetting_rate_ * map["point_layer0"] + (1.0 - forgetting_rate_) * map["point_layer1"];
-    combine_map["scan_combined_layer"] = map["scan_layer0"] + scan_late * map["scan_layer1"];
+    combine_map["point_combined_layer"] =
+      forgetting_rate_ * map["scan_layer0"] + (1.0 - forgetting_rate_) * map["scan_layer1"];
   }
-  auto combine_outputMessage = grid_map::GridMapRosConverter::toMessage(combine_map);
-  auto outputMessage = grid_map::GridMapRosConverter::toMessage(map);
-  grid_map_pub_->publish(std::move(outputMessage));
-  combine_grid_map_pub_->publish(std::move(combine_outputMessage));
+  auto combine_output_message = grid_map::GridMapRosConverter::toMessage(combine_map);
+  auto output_message = grid_map::GridMapRosConverter::toMessage(map);
+  grid_map_pub_->publish(std::move(output_message));
+  combine_grid_map_pub_->publish(std::move(combine_output_message));
   return;
-}
-
-void CostmapCalculatorComponent::TransformScan(
-  const sensor_msgs::msg::LaserScan & scan, const geometry_msgs::msg::PoseStamped & pose)
-{
-  Eigen::Matrix3d scan_rotation_matrix;
-  scan_rotation_matrix = quaternion_operation::getRotationMatrix(pose.pose.orientation);
-  for (int i = 0; i < static_cast<int>(scan.ranges.size()); i++) {
-    if (range_max_ >= scan.ranges[i]) {
-      double theta = scan.angle_min + scan.angle_increment * static_cast<double>(i);
-      double scan_x = scan.ranges[i] * std::cos(theta);
-      double scan_y = scan.ranges[i] * std::sin(theta);
-      double transform_x = scan_x * scan_rotation_matrix(0, 0) +
-                           scan_y * scan_rotation_matrix(0, 1) + pose.pose.position.x;
-      double transform_y = scan_x * scan_rotation_matrix(1, 0) +
-                           scan_y * scan_rotation_matrix(1, 1) + pose.pose.position.y;
-      scan_x = transform_x;
-      scan_y = transform_y;
-    }
-  }
 }
 
 void CostmapCalculatorComponent::addScanToGridMap(

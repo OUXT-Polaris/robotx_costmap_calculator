@@ -103,8 +103,8 @@ private:
   boost::circular_buffer<sensor_msgs::msg::LaserScan> scan_buffer_;
   grid_map::GridMap combine_map;
   grid_map::GridMap map;
-  void TransformScan(
-    const sensor_msgs::msg::LaserScan & scan, const geometry_msgs::msg::PoseStamped & pose);
+  std::vector<geometry_msgs::msg::Point> transformScanPoints(
+    const sensor_msgs::msg::LaserScan & scan, const geometry_msgs::msg::PoseStamped & pose) const;
   void addScanToGridMap(
     const sensor_msgs::msg::LaserScan & scan, const std::string & scan_layer_name);
   void addPointCloudToGridMap(
@@ -123,9 +123,8 @@ private:
   int num_grids_;
   int laser_num_grids_;
   double range_max_;
-  float point_late;
-  double scan_late;
   double forgetting_rate_;
+  bool use_scan_;
   std::string visualize_frame_id_;
   std::shared_ptr<data_buffer::PoseStampedDataBuffer> data_buffer;
 };
