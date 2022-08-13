@@ -102,9 +102,10 @@ private:
   boost::circular_buffer<sensor_msgs::msg::LaserScan::SharedPtr> scan_buffer_;
   grid_map::GridMap grid_map;
   std::vector<geometry_msgs::msg::Point> transformScanPoints(
-    const sensor_msgs::msg::LaserScan & scan, const geometry_msgs::msg::Pose & pose) const;
-  void addScanToGridMap(
-    const sensor_msgs::msg::LaserScan & scan, const std::string & scan_layer_name);
+    const sensor_msgs::msg::LaserScan & scan,
+    const geometry_msgs::msg::Pose & pose = geometry_msgs::msg::Pose()) const;
+  void addPointsToGridMap(
+    const std::vector<geometry_msgs::msg::Point> & points, const std::string & scan_layer_name);
   void addPointCloudToGridMap(
     const sensor_msgs::msg::PointCloud2 & cloud, const std::string & grid_map_layer_name);
   void combine();

@@ -113,16 +113,22 @@ void CostmapCalculatorComponent::poseCallback(const geometry_msgs::msg::PoseStam
 void CostmapCalculatorComponent::scanCallback(const sensor_msgs::msg::LaserScan::SharedPtr scan)
 {
   scan_buffer_.push_back(scan);
+  geometry_msgs::msg::PoseStamped scan_pose;
+  pose_buffer_->queryData(scan->header.stamp, scan_pose);
   for (size_t j = 0; j < scan_buffer_.size(); j++) {
-    geometry_msgs::msg::PoseStamped scan_pose;
-    pose_buffer_->queryData(scan->header.stamp, scan_pose);
     std::stringstream ss;
     ss << j;
     std::string scan_layer_name("scan_layer" + ss.str());
     if (j == 0) {
-      addScanToGridMap(*scan_buffer_[j], scan_layer_name);
+      addPointsToGridMap(transformScanPoints(*scan_buffer_[j]), scan_layer_name);
+      // addScanToGridMap(*scan_buffer_[j], scan_layer_name);
     } else {
-      addScanToGridMap(*scan_buffer_[j], scan_layer_name);
+      geometry_msgs::msg::PoseStamped prev_scan_pose;
+      pose_buffer_->queryData(scan->header.stamp, prev_scan_pose);
+      addPointsToGridMap(
+        transformScanPoints(*scan_buffer_[j], getRelativePose(scan_pose.pose, prev_scan_pose.pose)),
+        scan_layer_name);
+      // addScanToGridMap(*scan_buffer_[j], scan_layer_name);
     }
   }
   publish();
@@ -216,32 +222,21 @@ void CostmapCalculatorComponent::combine()
   }
 }
 
-void CostmapCalculatorComponent::addScanToGridMap(
-  const sensor_msgs::msg::LaserScan & scan, const std::string & scan_layer_name)
+void CostmapCalculatorComponent::addPointsToGridMap(
+  const std::vector<geometry_msgs::msg::Point> & points, const std::string & scan_layer_name)
 {
   grid_map.add(scan_layer_name, 0.0);
-  for (int i = 0; i < static_cast<int>(scan.ranges.size()); i++) {
-    if (range_max_ >= scan.ranges[i]) {
-      double theta = scan.angle_min + scan.angle_increment * static_cast<double>(i);
-      double scan_x = scan.ranges[i] * std::cos(theta);
-      double scan_y = scan.ranges[i] * std::sin(theta);
-      //for (grid_map::CircleIterator iterator(map, grid_map::Position(scan_x, scan_y), 1.0);
-      for (grid_map::CircleIterator iterator(
-             grid_map, grid_map::Position(scan_x, scan_y), resolution_ * 0.5);
-           !iterator.isPastEnd(); ++iterator) {
-        if (std::isnan(grid_map.at(scan_layer_name, *iterator))) {
-          grid_map.at(scan_layer_name, *iterator) = 0.0;
-        } else {
-          if (grid_map.at(scan_layer_name, *iterator) < 1.0) {
-            grid_map.at(scan_layer_name, *iterator) = grid_map.at(scan_layer_name, *iterator) + 0.1;
-          }
+  for (const auto point : points) {
+    for (grid_map::CircleIterator iterator(
+           grid_map, grid_map::Position(point.x, point.y), resolution_ * 0.5);
+         !iterator.isPastEnd(); ++iterator) {
+      if (std::isnan(grid_map.at(scan_layer_name, *iterator))) {
+        grid_map.at(scan_layer_name, *iterator) = 0.0;
+      } else {
+        if (grid_map.at(scan_layer_name, *iterator) < 1.0) {
+          grid_map.at(scan_layer_name, *iterator) = grid_map.at(scan_layer_name, *iterator) + 0.1;
         }
       }
-    }
-  }
-  for (grid_map::GridMapIterator iterator(grid_map); !iterator.isPastEnd(); ++iterator) {
-    if (std::isnan(grid_map.at(scan_layer_name, *iterator))) {
-      grid_map.at(scan_layer_name, *iterator) = 0.0;
     }
   }
 }
