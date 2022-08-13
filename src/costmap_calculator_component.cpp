@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include <chrono>
 #include <data_buffer/data_buffer_base.hpp>
 #include <grid_map_ros/GridMapRosConverter.hpp>
@@ -76,7 +75,6 @@ CostmapCalculatorComponent::CostmapCalculatorComponent(const rclcpp::NodeOptions
   pose_sub_ = create_subscription<geometry_msgs::msg::PoseStamped>(
     current_pose_topic, 10,
     std::bind(&CostmapCalculatorComponent::poseCallback, this, std::placeholders::_1));
-  
 
   grid_map_pub_ = create_publisher<grid_map_msgs::msg::GridMap>("grid_map", 1);
 
@@ -113,7 +111,6 @@ void CostmapCalculatorComponent::poseCallback(const geometry_msgs::msg::PoseStam
   return;
 }
 
-
 void CostmapCalculatorComponent::scanCallback(const sensor_msgs::msg::LaserScan::SharedPtr scan)
 {
   scan_buffer_.push_back(*scan);
@@ -127,7 +124,7 @@ void CostmapCalculatorComponent::scanCallback(const sensor_msgs::msg::LaserScan:
     std::stringstream ss;
     ss << j;
     std::string scan_layer_name("scan_layer" + ss.str());
-    map[scan_layer_name] = getScanToGridMap(scan_, scan_layer_name);    
+    map[scan_layer_name] = getScanToGridMap(scan_, scan_layer_name);
   }
   // combine_map.add("point_combined_layer", 0.0);
   combine_map.add("scan_combined_layer", 0.0);

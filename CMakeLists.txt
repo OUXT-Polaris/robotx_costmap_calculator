@@ -41,81 +41,104 @@ link_directories(
 add_definitions(${PCL_DEFINITIONS})
 
 
+ament_auto_add_library(costmap_calculator_component SHARED
+  src/costmap_calculator_component.cpp)
 
-
-add_library(costmap_calculator_component SHARED
-  src/costmap_calculator_component.cpp
-  )
+# add_library(costmap_calculator_component SHARED
+#   src/costmap_calculator_component.cpp
+#   )
 
 target_compile_definitions(costmap_calculator_component
   PRIVATE "COSTMAP_CALCULATOR_COMPONENT_BUILDING_DLL")
-ament_target_dependencies(costmap_calculator_component
-  rclcpp
-  rclcpp_components
-  sensor_msgs
-  grid_map_msgs
-  grid_map_core
-  grid_map_ros
-  pcl_conversions
-  geometry_msgs
-  data_buffer
-  geometry_msgs_data_buffer
-  pcl_apps_msgs
-  )
+# ament_target_dependencies(costmap_calculator_component
+#   rclcpp
+#   rclcpp_components
+#   sensor_msgs
+#   grid_map_msgs
+#   grid_map_core
+#   grid_map_ros
+#   pcl_conversions
+#   geometry_msgs
+#   data_buffer
+#   geometry_msgs_data_buffer
+#   pcl_apps_msgs
+#   )
 target_link_libraries(costmap_calculator_component
  ${PCL_LIBRARIES})
 
-add_executable(costmap_calculator_node
+# add_executable(costmap_calculator_node
+#   src/costmap_calculator_node.cpp
+# )
+
+ament_auto_add_executable(costmap_calculator_node
   src/costmap_calculator_node.cpp
 )
+
 rclcpp_components_register_nodes(costmap_calculator_component
  "robotx_costmap_calculator::CostmapCalculatorComponent")
 
 
-target_link_libraries(costmap_calculator_node
- costmap_calculator_component)
-ament_target_dependencies(costmap_calculator_node
-  rclcpp
-  rclcpp_components
-  sensor_msgs
-  grid_map_core
-  grid_map_msgs
-  grid_map_ros
-  pcl_conversions
-  geometry_msgs
-  data_buffer
-  geometry_msgs_data_buffer
-  pcl_apps_msgs
-  )
+# target_link_libraries(costmap_calculator_node
+#  costmap_calculator_component)
+# ament_target_dependencies(costmap_calculator_node
+#   rclcpp
+#   rclcpp_components
+#   sensor_msgs
+#   grid_map_core
+#   grid_map_msgs
+#   grid_map_ros
+#   pcl_conversions
+#   geometry_msgs
+#   data_buffer
+#   geometry_msgs_data_buffer
+#   pcl_apps_msgs
+#   )
 
-add_library(costmap_to_polygon_component SHARED
-  src/costmap_to_polygon_component.cpp
-)
+ament_auto_add_library(costmap_to_polygon_component SHARED
+  src/costmap_to_polygon_component.cpp)
+
+# add_library(costmap_to_polygon_component SHARED
+#   src/costmap_to_polygon_component.cpp
+# )
+
 target_compile_definitions(costmap_to_polygon_component
   PRIVATE "COSTMAP_TO_POLYGON_COMPONENT_BUILDING_DLL")
-ament_target_dependencies(costmap_to_polygon_component
-  rclcpp
-  rclcpp_components
-  grid_map_msgs
-  grid_map_ros
-  pcl_apps_msgs
-)
+# ament_target_dependencies(costmap_to_polygon_component
+#   rclcpp
+#   rclcpp_components
+#   grid_map_msgs
+#   grid_map_ros
+#   pcl_apps_msgs
+# )
 
-add_executable(costmap_to_polygon_node
+ament_auto_add_executable(costmap_to_polygon_node
   src/costmap_to_polygon_node.cpp
 )
+# add_executable(costmap_to_polygon_node
+#   src/costmap_to_polygon_node.cpp
+# )
+
+# target_link_libraries(costmap_to_polygon_node
+# costmap_to_polygon_component)
+# ament_target_dependencies(costmap_to_polygon_node
+#   rclcpp
+#   rclcpp_components
+#   grid_map_msgs
+#   grid_map_ros
+#   pcl_apps_msgs)
 
 rclcpp_components_register_nodes(costmap_to_polygon_component
  "robotx_costmap_calculator::CostmapToPolygonComponent")
 
-target_link_libraries(costmap_to_polygon_node
-costmap_to_polygon_component)
-ament_target_dependencies(costmap_to_polygon_node
-  rclcpp
-  rclcpp_components
-  grid_map_msgs
-  grid_map_ros
-  pcl_apps_msgs)
+ament_auto_add_library(costmap_filter_component SHARED
+  src/costmap_filter_component.cpp)
+
+target_compile_definitions(costmap_filter_component
+  PRIVATE "COSTMAP_FILTER_COMPONENT_BUILDING_DLL")
+
+ament_auto_add_executable(costmap_filter_node
+  src/costmap_filter_node.cpp
+)
 
 
 
@@ -125,29 +148,8 @@ ament_target_dependencies(costmap_to_polygon_node
  endforeach()
  
 
-install(TARGETS
-  costmap_calculator_node
-  DESTINATION lib/robotx_costmap_calculator
-)
 
-install(TARGETS
-  costmap_to_polygon_node
-  DESTINATION lib/robotx_costmap_calculator
-)
 
-install(TARGETS costmap_calculator_component 
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
-  INCLUDES DESTINATION include)
-
-  install(TARGETS costmap_to_polygon_component 
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
-  INCLUDES DESTINATION include)
-
-#ament_export_libraries(costmap_calculator_component)
 install(
   DIRECTORY "include/"
   DESTINATION include

@@ -19,10 +19,10 @@
 extern "C" {
 #endif
 
-  // The below macros are taken from https://gcc.gnu.org/wiki/Visibility and from
-  // demos/composition/include/composition/visibility_control.h at https://github.com/ros2/demos
-  #if defined _WIN32 || defined __CYGWIN__
-  #ifdef __GNUC__
+// The below macros are taken from https://gcc.gnu.org/wiki/Visibility and from
+// demos/composition/include/composition/visibility_control.h at https://github.com/ros2/demos
+#if defined _WIN32 || defined __CYGWIN__
+#ifdef __GNUC__
 #define COSTMAP_CALCULATOR_COSTMAP_TO_POLYGON_COMPONENT_EXPORT __attribute__((dllexport))
 #define COSTMAP_CALCULATOR_COSTMAP_TO_POLYGON_COMPONENT_IMPORT __attribute__((dllimport))
 #else
@@ -58,14 +58,12 @@ extern "C" {
 }  // extern "
 #endif
 
-
-
 #include <grid_map_core/GridMap.hpp>
 #include <grid_map_core/iterators/GridMapIterator.hpp>
 #include <grid_map_msgs/msg/grid_map.hpp>
 #include <grid_map_ros/grid_map_ros.hpp>
-#include <pcl_apps_msgs/msg/polygon_array.hpp>
 #include <memory>
+#include <pcl_apps_msgs/msg/polygon_array.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <string>
 

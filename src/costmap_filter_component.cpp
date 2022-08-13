@@ -16,15 +16,15 @@
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_components/register_node_macro.hpp>
-#include <robotx_costmap_calculator/costmap_to_polygon_component.hpp>
+#include <robotx_costmap_calculator/costmap_filter_component.hpp>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
 namespace robotx_costmap_calculator
 {
-CostmapToPolygonComponent::CostmapToPolygonComponent(const rclcpp::NodeOptions & options)
-: Node("robotx_costmap_to_polygon", options)
+CostmapFilterComponent::CostmapFilterComponent(const rclcpp::NodeOptions & options)
+: Node("robotx_costmap_filter", options)
 {
   std::string grid_map_topic;
   declare_parameter<std::string>("grid_map_topic", "/perception/combine_grid_map");
@@ -33,25 +33,17 @@ CostmapToPolygonComponent::CostmapToPolygonComponent(const rclcpp::NodeOptions &
   //subscriber
   grid_map_sub_ = create_subscription<grid_map_msgs::msg::GridMap>(
     grid_map_topic, 1,
-    std::bind(&CostmapToPolygonComponent::gridmapCallback, this, std::placeholders::_1));
+    std::bind(&CostmapFilterComponent::gridmapCallback, this, std::placeholders::_1));
 }
 
-void CostmapToPolygonComponent::gridmapCallback(const grid_map_msgs::msg::GridMap::SharedPtr msg)
+void CostmapFilterComponent::gridmapCallback(const grid_map_msgs::msg::GridMap::SharedPtr msg)
 {
   grid_map::GridMap map;
   grid_map::GridMapRosConverter::fromMessage(*msg, map);
   for (grid_map::GridMapIterator iterator(map); !iterator.isPastEnd(); ++iterator) {
     grid_map::Position position;
     map.getPosition(*iterator, position);
-    grid_map::Index index;
-    if (!map.getIndex(position, index)) {
-      return;
-    }
-    position_map.insert(std::make_pair(index(0), index(1)));  //rows,cols
-  }
-  for (auto itr = position_map.begin(); itr != position_map.end(); ++itr) {
-    std::cout << "index0 = " << itr->first << ", index1 = " << itr->second << "\n";
   }
 }
 }  // namespace robotx_costmap_calculator
-RCLCPP_COMPONENTS_REGISTER_NODE(robotx_costmap_calculator::CostmapToPolygonComponent)
+RCLCPP_COMPONENTS_REGISTER_NODE(robotx_costmap_calculator::CostmapFilterComponent)
