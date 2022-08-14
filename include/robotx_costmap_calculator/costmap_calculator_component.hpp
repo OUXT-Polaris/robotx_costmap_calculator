@@ -91,7 +91,6 @@ public:
 
 private:
   rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr grid_map_pub_;
-  rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr combine_grid_map_pub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_sub_;
   rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr laserscan_sub_;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr pose_sub_;
@@ -99,23 +98,19 @@ private:
   void pointCloudCallback(const sensor_msgs::msg::PointCloud2::SharedPtr cloud);
   void scanCallback(const sensor_msgs::msg::LaserScan::SharedPtr scan);
   void poseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr pose);
-  boost::circular_buffer<sensor_msgs::msg::PointCloud2> cloud_buffer_;
-  boost::circular_buffer<sensor_msgs::msg::LaserScan> scan_buffer_;
-  grid_map::GridMap combine_map;
-  grid_map::GridMap map;
-  void TransformScan(
-    const sensor_msgs::msg::LaserScan & scan, const geometry_msgs::msg::PoseStamped & pose);
-  void addScanToGridMap(
-    const sensor_msgs::msg::LaserScan & scan, const std::string & scan_layer_name);
+  boost::circular_buffer<sensor_msgs::msg::PointCloud2::SharedPtr> cloud_buffer_;
+  boost::circular_buffer<sensor_msgs::msg::LaserScan::SharedPtr> scan_buffer_;
+  grid_map::GridMap grid_map_;
+  std::vector<geometry_msgs::msg::Point> transformScanPoints(
+    const sensor_msgs::msg::LaserScan & scan,
+    const geometry_msgs::msg::Pose & pose = geometry_msgs::msg::Pose()) const;
+  void addPointsToGridMap(
+    const std::vector<geometry_msgs::msg::Point> & points, const std::string & scan_layer_name);
   void addPointCloudToGridMap(
     const sensor_msgs::msg::PointCloud2 & cloud, const std::string & grid_map_layer_name);
-  std::string points_raw_topic_;
-  std::string laserscan_raw_topic_;
+  void combine();
+  void publish();
   std::string output_topic_;
-  std::string current_pose_topic;
-  geometry_msgs::msg::PoseStamped pose_data;
-  geometry_msgs::msg::PoseStamped new_pose;
-  geometry_msgs::msg::PoseStamped interpolation_pose;
   double update_rate_;
   double resolution_;
   double laser_resolution_;
@@ -123,11 +118,13 @@ private:
   int num_grids_;
   int laser_num_grids_;
   double range_max_;
-  float point_late;
-  double scan_late;
   double forgetting_rate_;
+  bool use_scan_;
+  size_t scan_buffer_size_;
   std::string visualize_frame_id_;
-  std::shared_ptr<data_buffer::PoseStampedDataBuffer> data_buffer;
+  std::shared_ptr<data_buffer::PoseStampedDataBuffer> pose_buffer_;
+  const geometry_msgs::msg::Pose getRelativePose(
+    const geometry_msgs::msg::Pose & from, const geometry_msgs::msg::Pose & to) const;
 };
 }  // namespace robotx_costmap_calculator
 

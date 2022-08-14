@@ -27,7 +27,6 @@ find_package(pcl_conversions REQUIRED)
 find_package(PCL REQUIRED)
 find_package(Eigen3 REQUIRED)
 
-
 include_directories(
   include
   ${PCL_INCLUDE_DIRS}
@@ -40,9 +39,6 @@ link_directories(
 )
 
 add_definitions(${PCL_DEFINITIONS})
-
-
-
 
 add_library(costmap_calculator_component SHARED
   src/costmap_calculator_component.cpp
@@ -71,7 +67,6 @@ add_executable(costmap_calculator_node
 rclcpp_components_register_nodes(costmap_calculator_component
  "robotx_costmap_calculator::CostmapCalculatorComponent")
 
-
 target_link_libraries(costmap_calculator_node
  costmap_calculator_component)
 ament_target_dependencies(costmap_calculator_node
@@ -87,13 +82,21 @@ ament_target_dependencies(costmap_calculator_node
   geometry_msgs_data_buffer
   )
 
+# workaround to allow deprecated header to build on both galactic and humble
+if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
+  target_compile_definitions(costmap_calculator_component PUBLIC
+    USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
+  )
+  target_compile_definitions(costmap_calculator_node PUBLIC
+    USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
+  )
+endif()
 
- foreach(target ${target_list})
-   target_compile_options(${target} PRIVATE "SHELL:--param gcc-min-expand=1")
-   target_compile_options(${target} PRIVATE "SHELL:--param gcc-min-heapsize=32768")
- endforeach()
+foreach(target ${target_list})
+  target_compile_options(${target} PRIVATE "SHELL:--param gcc-min-expand=1")
+  target_compile_options(${target} PRIVATE "SHELL:--param gcc-min-heapsize=32768")
+endforeach()
  
-
 install(TARGETS
   costmap_calculator_node
   DESTINATION lib/robotx_costmap_calculator
@@ -121,4 +124,3 @@ if(BUILD_TESTING)
 endif()
 
 ament_auto_package()
-
