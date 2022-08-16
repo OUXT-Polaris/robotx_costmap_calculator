@@ -61,6 +61,7 @@ extern "C" {
 
 #include <grid_map_core/GridMap.hpp>
 #include <grid_map_core/iterators/GridMapIterator.hpp>
+#include <grid_map_core/TypeDefs.hpp>
 #include <grid_map_msgs/msg/grid_map.hpp>
 #include <grid_map_ros/grid_map_ros.hpp>
 #include <memory>
@@ -77,8 +78,21 @@ public:
   explicit CostmapInterpolationComponent(const rclcpp::NodeOptions & options);
 
 private:
+  rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr interpolation_map_pub_;
   rclcpp::Subscription<grid_map_msgs::msg::GridMap>::SharedPtr grid_map_sub_;
   void gridmapCallback(const grid_map_msgs::msg::GridMap::SharedPtr msg);
+  void initGridMap();
+
+  const std::map<std::string, grid_map::InterpolationMethods> interpolationMethods = {
+  {"Nearest", grid_map::InterpolationMethods::INTER_NEAREST},
+  {"Linear", grid_map::InterpolationMethods::INTER_LINEAR},
+  {"Cubic_convolution", grid_map::InterpolationMethods::INTER_CUBIC_CONVOLUTION},
+  {"Cubic", grid_map::InterpolationMethods::INTER_CUBIC}};
+
+  grid_map::GridMap interpolation_map;
+  std::string interpolationMethod_;
+  double interpolation_map_resolution_;
+  int num_grids_;
 };
 }  // namespace robotx_costmap_calculator
 
