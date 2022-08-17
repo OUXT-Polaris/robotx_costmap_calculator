@@ -24,7 +24,7 @@
 namespace robotx_costmap_calculator
 {
 CostmapInterpolationComponent::CostmapInterpolationComponent(const rclcpp::NodeOptions & options)
-: Node("costmap_interpolation", options)
+: Node("robotx_costmap_interpolation", options)
 {
   std::string grid_map_topic;
   declare_parameter<std::string>("grid_map_topic", "/perception/combine_grid_map");
@@ -41,8 +41,7 @@ CostmapInterpolationComponent::CostmapInterpolationComponent(const rclcpp::NodeO
     grid_map_topic, 1,
     std::bind(&CostmapInterpolationComponent::gridmapCallback, this, std::placeholders::_1));
 
-  interpolation_map_pub_ = create_publisher<grid_map_msgs::msg::GridMap>(
-    "interpolation_map", 1);
+  interpolation_map_pub_ = create_publisher<grid_map_msgs::msg::GridMap>("interpolation_map", 1);
   initGridMap();
 }
 
@@ -50,8 +49,9 @@ void CostmapInterpolationComponent::initGridMap()
 {
   interpolation_map.setFrameId("base_link");
   interpolation_map.setGeometry(
-    grid_map::Length(interpolation_map_resolution_ * num_grids_, interpolation_map_resolution_ * num_grids_), interpolation_map_resolution_,
-    grid_map::Position(0.0, 0.0));
+    grid_map::Length(
+      interpolation_map_resolution_ * num_grids_, interpolation_map_resolution_ * num_grids_),
+    interpolation_map_resolution_, grid_map::Position(0.0, 0.0));
 }
 
 void CostmapInterpolationComponent::gridmapCallback(
@@ -62,7 +62,8 @@ void CostmapInterpolationComponent::gridmapCallback(
   for (grid_map::GridMapIterator iterator(interpolation_map); !iterator.isPastEnd(); ++iterator) {
     grid_map::Position position;
     interpolation_map.getPosition(*iterator, position);
-    interpolation_map.at("interpolation_layer",*iterator) =interpolation_map.atPosition("scan_combined_layer", position, interpolationMethods.at(interpolationMethod_));
+    interpolation_map.at("interpolation_layer", *iterator) = interpolation_map.atPosition(
+      "scan_combined_layer", position, interpolationMethods.at(interpolationMethod_));
   }
   auto interpolation_map_msg = grid_map::GridMapRosConverter::toMessage(interpolation_map);
   interpolation_map_pub_->publish(std::move(interpolation_map_msg));

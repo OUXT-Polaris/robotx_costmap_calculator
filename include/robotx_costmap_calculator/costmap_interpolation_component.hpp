@@ -60,8 +60,8 @@ extern "C" {
 #endif
 
 #include <grid_map_core/GridMap.hpp>
-#include <grid_map_core/iterators/GridMapIterator.hpp>
 #include <grid_map_core/TypeDefs.hpp>
+#include <grid_map_core/iterators/GridMapIterator.hpp>
 #include <grid_map_msgs/msg/grid_map.hpp>
 #include <grid_map_ros/grid_map_ros.hpp>
 #include <memory>
@@ -84,10 +84,10 @@ private:
   void initGridMap();
 
   const std::map<std::string, grid_map::InterpolationMethods> interpolationMethods = {
-  {"Nearest", grid_map::InterpolationMethods::INTER_NEAREST},
-  {"Linear", grid_map::InterpolationMethods::INTER_LINEAR},
-  {"Cubic_convolution", grid_map::InterpolationMethods::INTER_CUBIC_CONVOLUTION},
-  {"Cubic", grid_map::InterpolationMethods::INTER_CUBIC}};
+    {"Nearest", grid_map::InterpolationMethods::INTER_NEAREST},
+    {"Linear", grid_map::InterpolationMethods::INTER_LINEAR},
+    {"Cubic_convolution", grid_map::InterpolationMethods::INTER_CUBIC_CONVOLUTION},
+    {"Cubic", grid_map::InterpolationMethods::INTER_CUBIC}};
 
   grid_map::GridMap interpolation_map;
   std::string interpolationMethod_;

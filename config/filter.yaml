@@ -1,0 +1,10 @@
+robotx_costmap_filter:
+  ros__parameters:
+    filters:    
+      filter1:  # Set lower threshold filter
+        name: lower_threshold
+        type: gridMapFilters/ThresholdFilter
+        params:
+          layer: 
+          lower_threshold: 0.3
+          set_to: 0.0
