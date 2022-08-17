@@ -26,7 +26,6 @@ find_package(pcl_conversions REQUIRED)
 find_package(PCL REQUIRED)
 find_package(Eigen3 REQUIRED)
 
-
 include_directories(
   include
   ${PCL_INCLUDE_DIRS}
@@ -152,13 +151,21 @@ ament_auto_add_executable(costmap_interpolation_node
   src/costmap_interpolation_node.cpp
 )
 
+# workaround to allow deprecated header to build on both galactic and humble
+if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
+  target_compile_definitions(costmap_calculator_component PUBLIC
+    USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
+  )
+  target_compile_definitions(costmap_calculator_node PUBLIC
+    USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
+  )
+endif()
 
- foreach(target ${target_list})
-   target_compile_options(${target} PRIVATE "SHELL:--param gcc-min-expand=1")
-   target_compile_options(${target} PRIVATE "SHELL:--param gcc-min-heapsize=32768")
- endforeach()
+foreach(target ${target_list})
+  target_compile_options(${target} PRIVATE "SHELL:--param gcc-min-expand=1")
+  target_compile_options(${target} PRIVATE "SHELL:--param gcc-min-heapsize=32768")
+endforeach()
  
-
 
 
 install(
@@ -176,4 +183,3 @@ if(BUILD_TESTING)
 endif()
 
 ament_auto_package()
-
