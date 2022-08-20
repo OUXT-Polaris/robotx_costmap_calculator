@@ -67,7 +67,7 @@ void CostmapInterpolationComponent::gridmapCallback(
       "combined", position,
       interpolationMethods.at(interpolationMethod_));  //change get_parameter input layer name
   }
-  auto interpolation_map_msg = grid_map::GridMapRosConverter::toMessage(interpolation_map);
+  auto interpolation_map_msg = grid_map::GridMapRosConverter::toMessage(interpolation_map_);
   interpolation_map_pub_->publish(std::move(interpolation_map_msg));
 }
 }  // namespace robotx_costmap_calculator
