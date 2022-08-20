@@ -5,6 +5,6 @@ robotx_costmap_filter:
         name: lower_threshold
         type: gridMapFilters/ThresholdFilter
         params:
-          layer: 
+          layer: combined
           lower_threshold: 0.3
           set_to: 0.0
