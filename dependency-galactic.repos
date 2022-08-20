@@ -19,3 +19,7 @@ repositories:
         url: https://github.com/OUXT-Polaris/quaternion_operation.git
         type: git
         version: ros2
+    pcl_apps:
+        type: git
+        url: https://github.com/OUXT-Polaris/pcl_apps.git
+        version: master

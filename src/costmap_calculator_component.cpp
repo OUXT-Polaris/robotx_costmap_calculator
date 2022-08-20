@@ -12,9 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <quaternion_operation/quaternion_operation.h>
-#include <tf2/LinearMath/Quaternion.h>
-
 #include <chrono>
 #include <data_buffer/data_buffer_base.hpp>
 #include <geometry_msgs/msg/transform.hpp>
