@@ -140,6 +140,9 @@ ament_auto_add_executable(costmap_filter_node
   src/costmap_filter_node.cpp
 )
 
+rclcpp_components_register_nodes(costmap_filter_component
+ "robotx_costmap_calculator::CostmapFilterComponent")
+
 # costmap_interpolation_component
 ament_auto_add_library(costmap_interpolation_component SHARED
   src/costmap_interpolation_component.cpp)
@@ -150,6 +153,8 @@ target_compile_definitions(costmap_interpolation_component
 ament_auto_add_executable(costmap_interpolation_node
   src/costmap_interpolation_node.cpp
 )
+rclcpp_components_register_nodes(costmap_interpolation_component
+ "robotx_costmap_calculator::CostmapInterpolationComponent")
 
 # workaround to allow deprecated header to build on both galactic and humble
 if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
