@@ -33,7 +33,7 @@ CostmapInterpolationComponent::CostmapInterpolationComponent(const rclcpp::NodeO
   get_parameter("interpolation_type", interpolationMethod_);
   declare_parameter("interpolation_map_resolution", 0.05);
   get_parameter("interpolation_map_resolution", interpolation_map_resolution_);
-  declare_parameter("num_grids", 20);
+  declare_parameter("num_grids", 200);
   get_parameter("num_grids", num_grids_);
 
   //subscriber
@@ -47,8 +47,8 @@ CostmapInterpolationComponent::CostmapInterpolationComponent(const rclcpp::NodeO
 
 void CostmapInterpolationComponent::initGridMap()
 {
-  interpolation_map.setFrameId("base_link");
-  interpolation_map.setGeometry(
+  interpolation_map_.setFrameId("base_link");
+  interpolation_map_.setGeometry(
     grid_map::Length(
       interpolation_map_resolution_ * num_grids_, interpolation_map_resolution_ * num_grids_),
     interpolation_map_resolution_, grid_map::Position(0.0, 0.0));
@@ -57,13 +57,14 @@ void CostmapInterpolationComponent::initGridMap()
 void CostmapInterpolationComponent::gridmapCallback(
   const grid_map_msgs::msg::GridMap::SharedPtr msg)
 {
-  interpolation_map.add("interpolation_layer", 0.0);
-  grid_map::GridMapRosConverter::fromMessage(*msg, interpolation_map);
-  for (grid_map::GridMapIterator iterator(interpolation_map); !iterator.isPastEnd(); ++iterator) {
+  interpolation_map_.add("interpolation_layer", 0.0);
+  grid_map::GridMap input_map;
+  grid_map::GridMapRosConverter::fromMessage(*msg, input_map);
+  for (grid_map::GridMapIterator iterator(interpolation_map_); !iterator.isPastEnd(); ++iterator) {
     grid_map::Position position;
-    interpolation_map.getPosition(*iterator, position);
-    interpolation_map.at("interpolation_layer", *iterator) = interpolation_map.atPosition(
-      "scan_combined_layer", position, interpolationMethods.at(interpolationMethod_));
+    interpolation_map_.getPosition(*iterator, position);
+    interpolation_map_.at("interpolation_layer", *iterator) = interpolation_map_.atPosition(
+      "combined", position, interpolationMethods.at(interpolationMethod_)); //change get_parameter input layer name 
   }
   auto interpolation_map_msg = grid_map::GridMapRosConverter::toMessage(interpolation_map);
   interpolation_map_pub_->publish(std::move(interpolation_map_msg));

@@ -89,7 +89,7 @@ private:
     {"Cubic_convolution", grid_map::InterpolationMethods::INTER_CUBIC_CONVOLUTION},
     {"Cubic", grid_map::InterpolationMethods::INTER_CUBIC}};
 
-  grid_map::GridMap interpolation_map;
+  grid_map::GridMap interpolation_map_;
   std::string interpolationMethod_;
   double interpolation_map_resolution_;
   int num_grids_;
