@@ -65,7 +65,7 @@ void CostmapInterpolationComponent::gridmapCallback(
   for (grid_map::GridMapIterator iterator(interpolation_map_); !iterator.isPastEnd(); ++iterator) {
     grid_map::Position position;
     interpolation_map_.getPosition(*iterator, position);
-    interpolation_map_.at("interpolation_layer", *iterator) = interpolation_map_.atPosition(
+    interpolation_map_.at("interpolation_layer", *iterator) = input_map.atPosition(
       input_layer_name_, position, interpolationMethods.at(interpolationMethod_));
   }
   auto interpolation_map_msg = grid_map::GridMapRosConverter::toMessage(interpolation_map_);
