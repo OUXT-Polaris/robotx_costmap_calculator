@@ -29,6 +29,8 @@ CostmapInterpolationComponent::CostmapInterpolationComponent(const rclcpp::NodeO
   std::string grid_map_topic;
   declare_parameter<std::string>("grid_map_topic", "/perception/combine_grid_map");
   get_parameter("grid_map_topic", grid_map_topic);
+  declare_parameter<std::string>("input_layer_name", "combined");
+  get_parameter("input_layer_name", input_layer_name_);
   declare_parameter<std::string>("interpolation_type", "Cubic");
   get_parameter("interpolation_type", interpolationMethod_);
   declare_parameter("interpolation_map_resolution", 0.05);
@@ -64,7 +66,7 @@ void CostmapInterpolationComponent::gridmapCallback(
     grid_map::Position position;
     interpolation_map_.getPosition(*iterator, position);
     interpolation_map_.at("interpolation_layer", *iterator) = interpolation_map_.atPosition(
-      "combined", position,
+      input_layer_name_, position,
       interpolationMethods.at(interpolationMethod_));  //change get_parameter input layer name
   }
   auto interpolation_map_msg = grid_map::GridMapRosConverter::toMessage(interpolation_map_);

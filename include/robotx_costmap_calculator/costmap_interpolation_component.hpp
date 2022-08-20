@@ -91,6 +91,7 @@ private:
 
   grid_map::GridMap interpolation_map_;
   std::string interpolationMethod_;
+  std::string input_layer_name_;
   double interpolation_map_resolution_;
   int num_grids_;
 };
