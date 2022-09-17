@@ -78,7 +78,6 @@ public:
 private:
   rclcpp::Subscription<grid_map_msgs::msg::GridMap>::SharedPtr grid_map_sub_;
   void gridmapCallback(const grid_map_msgs::msg::GridMap::SharedPtr msg);
-  std::unordered_map<std::pair<size_t, size_t>, bool> checked_;
 };
 }  // namespace robotx_costmap_calculator
 
