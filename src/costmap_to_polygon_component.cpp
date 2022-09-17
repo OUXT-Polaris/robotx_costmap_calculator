@@ -38,6 +38,7 @@ CostmapToPolygonComponent::CostmapToPolygonComponent(const rclcpp::NodeOptions &
 
 void CostmapToPolygonComponent::gridmapCallback(const grid_map_msgs::msg::GridMap::SharedPtr msg)
 {
+  std::unordered_map<std::pair<size_t, size_t>, bool> checked;
   grid_map::GridMap map;
   grid_map::GridMapRosConverter::fromMessage(*msg, map);
   for (grid_map::GridMapIterator iterator(map); !iterator.isPastEnd(); ++iterator) {
