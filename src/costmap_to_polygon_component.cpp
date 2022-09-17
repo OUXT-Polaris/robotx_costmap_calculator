@@ -27,7 +27,7 @@ CostmapToPolygonComponent::CostmapToPolygonComponent(const rclcpp::NodeOptions &
 : Node("robotx_costmap_to_polygon", options)
 {
   std::string grid_map_topic;
-  declare_parameter<std::string>("grid_map_topic", "/perception/combine_grid_map");
+  declare_parameter<std::string>("grid_map_topic", "/perception/interpolation_grid_map");
   get_parameter("grid_map_topic", grid_map_topic);
 
   //subscriber

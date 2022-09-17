@@ -43,7 +43,7 @@ CostmapInterpolationComponent::CostmapInterpolationComponent(const rclcpp::NodeO
     grid_map_topic, 1,
     std::bind(&CostmapInterpolationComponent::gridmapCallback, this, std::placeholders::_1));
 
-  interpolation_map_pub_ = create_publisher<grid_map_msgs::msg::GridMap>("interpolation_map", 1);
+  interpolation_map_pub_ = create_publisher<grid_map_msgs::msg::GridMap>("interpolation_grid_map", 1);
   initGridMap();
 }
 
