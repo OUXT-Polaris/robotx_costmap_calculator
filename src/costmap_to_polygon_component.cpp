@@ -47,11 +47,13 @@ void CostmapToPolygonComponent::gridmapCallback(const grid_map_msgs::msg::GridMa
     if (!map.getIndex(position, index)) {
       return;
     }
-    position_map.insert(std::make_pair(index(0), index(1)));  //rows,cols
+    // position_map.insert(std::make_pair(index(0), index(1)));  //rows,cols
   }
+  /*
   for (const auto & map : position_map) {
     std::cout << "index0 = " << map.first << ", index1 = " << map.second << "\n";
   }
+  */
   /*
   for (auto itr = position_map.begin(); itr != position_map.end(); ++itr) {
     std::cout << "index0 = " << itr->first << ", index1 = " << itr->second << "\n";
