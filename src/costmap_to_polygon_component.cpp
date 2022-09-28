@@ -18,6 +18,7 @@
 #include <rclcpp_components/register_node_macro.hpp>
 #include <robotx_costmap_calculator/costmap_to_polygon_component.hpp>
 #include <string>
+#include <map>
 #include <unordered_map>
 #include <vector>
 
@@ -38,18 +39,30 @@ CostmapToPolygonComponent::CostmapToPolygonComponent(const rclcpp::NodeOptions &
 
 void CostmapToPolygonComponent::gridmapCallback(const grid_map_msgs::msg::GridMap::SharedPtr msg)
 {
-  std::unordered_map<std::pair<size_t, size_t>, bool> checked;
+  // std::unordered_multimap<std::pair<int, int>, double> checked;
+  std::multimap<std::pair<size_t, size_t>, bool> checked;
   grid_map::GridMap map;
+  bool checked_bool=false;
   grid_map::GridMapRosConverter::fromMessage(*msg, map);
+  double resolution= map.getResolution();
   for (grid_map::GridMapIterator iterator(map); !iterator.isPastEnd(); ++iterator) {
-    grid_map::Position position;
-    map.getPosition(*iterator, position);
-    grid_map::Index index;
-    if (!map.getIndex(position, index)) {
-      return;
+    grid_map::Position center_position;
+    map.getPosition(*iterator, center_position);
+    auto position_pair =std::make_pair(center_position(0),center_position(1));
+    for (grid_map::SpiralIterator spiral_iterator(map,center_position,resolution);!spiral_iterator.isPastEnd();++spiral_iterator)
+    {
+      grid_map::Position position;
+      map.getPosition(*spiral_iterator, position);
+      grid_map::Index index;
+      if(!map.getIndex(position, index)){
+        return;
+
     }
-    // position_map.insert(std::make_pair(index(0), index(1)));  //rows,cols
+    checked.emplace(position_pair,checked_bool);
+    std::cout << "count " << checked.count(position_pair) << "\n";
   }
+  std::cout << ", callback_debug" << "\n";
+    return;
   /*
   for (const auto & map : position_map) {
     std::cout << "index0 = " << map.first << ", index1 = " << map.second << "\n";
