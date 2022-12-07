@@ -215,14 +215,12 @@ boost::optional<std::vector<geometry_msgs::msg::Polygon>> CostmapToPolygonCompon
              cross(Convex_hull_point[k - 2], Convex_hull_point[k - 1], costmap_points[i]) <= 0)
         k--;
       Convex_hull_point[k++] = costmap_points[i];
-      // }
     }
     for (unsigned int i = Convex_num_points - 1, t = k + 1; i > 0; --i) {
       while (k >= t &&
              cross(Convex_hull_point[k - 2], Convex_hull_point[k - 1], costmap_points[i - 1]) <= 0)
         k--;
       Convex_hull_point[k++] = costmap_points[i - 1];
-      // }
     }
     Convex_hull_point.resize(k - 1);
     poly.points = Convex_hull_point;
@@ -285,5 +283,6 @@ visualization_msgs::msg::MarkerArray CostmapToPolygonComponent::generateMarker(
   }
   return marker_array;
 }
-// namespace robotx_costmap_calculator
+}  // namespace robotx_costmap_calculator
+
 RCLCPP_COMPONENTS_REGISTER_NODE(robotx_costmap_calculator::CostmapToPolygonComponent)
