@@ -12,20 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <chrono>
-
 #include <boost/algorithm/clamp.hpp>
-#include <boost/geometry.hpp>
-#include <boost/geometry/geometries/polygon.hpp>
-#include <boost/geometry/geometries/point_xy.hpp>
 #include <boost/assign/list_of.hpp>
-
+#include <boost/geometry.hpp>
+#include <boost/geometry/geometries/point_xy.hpp>
+#include <boost/geometry/geometries/polygon.hpp>
+#include <chrono>
+#include <map>
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_components/register_node_macro.hpp>
 #include <robotx_costmap_calculator/costmap_to_polygon_component.hpp>
 #include <string>
-#include <map>
 #include <unordered_map>
 #include <vector>
 
@@ -34,7 +32,7 @@ typedef double coord2_t;
 namespace robotx_costmap_calculator
 {
 CostmapToPolygonComponent::CostmapToPolygonComponent(const rclcpp::NodeOptions & options)
-: Node("robotx_costmap_to_polygon", options),buffer_(get_clock()), listener_(buffer_)
+: Node("robotx_costmap_to_polygon", options), buffer_(get_clock()), listener_(buffer_)
 {
   std::string grid_map_topic;
   declare_parameter<std::string>("grid_map_topic", "/perception/interpolation_grid_map");
@@ -58,7 +56,6 @@ CostmapToPolygonComponent::CostmapToPolygonComponent(const rclcpp::NodeOptions &
   grid_map_pub_ = create_publisher<grid_map_msgs::msg::GridMap>("~/roundcheck_grid_map", 1);
 
   marker_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("~/marker", 1);
-
 }
 
 void CostmapToPolygonComponent::gridmapCallback(const grid_map_msgs::msg::GridMap::SharedPtr msg)
@@ -67,38 +64,37 @@ void CostmapToPolygonComponent::gridmapCallback(const grid_map_msgs::msg::GridMa
   geometry_msgs::msg::Polygon object_area;
   std::vector<geometry_msgs::msg::Point32> points;
   grid_map::GridMapRosConverter::fromMessage(*msg, map);
-  double resolution= map.getResolution();
-  map.add("round_check",0.0);
+  double resolution = map.getResolution();
+  map.add("round_check", 0.0);
   for (grid_map::GridMapIterator iterator(map); !iterator.isPastEnd(); ++iterator) {
     grid_map::Position center_position;
     map.getPosition(*iterator, center_position);
-    for (grid_map::SpiralIterator spiral_iterator(map,center_position,resolution);!spiral_iterator.isPastEnd();++spiral_iterator)
-    {
+    for (grid_map::SpiralIterator spiral_iterator(map, center_position, resolution);
+         !spiral_iterator.isPastEnd(); ++spiral_iterator) {
       grid_map::Position position;
       map.getPosition(*spiral_iterator, position);
-      if(std::isnan(map.at("interpolation_layer",*spiral_iterator))){
-        map.at("round_check",*spiral_iterator)=0.0;
-      }
-      else {
-        if(map.at("interpolation_layer",*spiral_iterator) > 0.0) {
-          map.at("round_check",*spiral_iterator) = 1.0;
+      if (std::isnan(map.at("interpolation_layer", *spiral_iterator))) {
+        map.at("round_check", *spiral_iterator) = 0.0;
+      } else {
+        if (map.at("interpolation_layer", *spiral_iterator) > 0.0) {
+          map.at("round_check", *spiral_iterator) = 1.0;
         }
       }
     }
-    if(map.at("round_check",*iterator) == 1.0){
+    if (map.at("round_check", *iterator) == 1.0) {
       grid_map::Position center_position;
       map.getPosition(*iterator, center_position);
       geometry_msgs::msg::Point32 p;
-      p.x=center_position(0);
-      p.y=center_position(1);
+      p.x = center_position(0);
+      p.y = center_position(1);
       object_area.points.push_back(p);
       points.push_back(p);
     }
   }
-  if(points.size()==0){
+  if (points.size() == 0) {
     return;
   }
-  auto polygons=getPolygons(points);
+  auto polygons = getPolygons(points);
   if (polygons) {
     if (previous_marker_size_ > polygons.get().size()) {
       marker_pub_->publish(generateDeleteMarker());
@@ -107,12 +103,12 @@ void CostmapToPolygonComponent::gridmapCallback(const grid_map_msgs::msg::GridMa
     marker_pub_->publish(marker);
     previous_marker_size_ = marker.markers.size();
   }
-  auto marker = generateMarker(polygons.get(),msg->header);
+  auto marker = generateMarker(polygons.get(), msg->header);
   marker_pub_->publish(marker);
   auto check_msg = grid_map::GridMapRosConverter::toMessage(map);
   check_msg->header.stamp = get_clock()->now();
   grid_map_pub_->publish(std::move(check_msg));
-    return;
+  return;
 }
 
 boost::optional<geometry_msgs::msg::PointStamped> CostmapToPolygonComponent::transform(
@@ -126,24 +122,19 @@ boost::optional<geometry_msgs::msg::PointStamped> CostmapToPolygonComponent::tra
       std::chrono::seconds(point.header.stamp.sec) +
       std::chrono::nanoseconds(point.header.stamp.nanosec));
     try {
-      geometry_msgs::msg::TransformStamped transform_stamped =
-        buffer_.lookupTransform(
-        target_frame_id, point.header.frame_id,
-        time_point, tf2::durationFromSec(1.0));
+      geometry_msgs::msg::TransformStamped transform_stamped = buffer_.lookupTransform(
+        target_frame_id, point.header.frame_id, time_point, tf2::durationFromSec(1.0));
       tf2::doTransform(point, point, transform_stamped);
       return point;
     } catch (...) {
       return boost::none;
     }
   } else {
-    tf2::TimePoint time_point = tf2::TimePoint(
-      std::chrono::seconds(0) +
-      std::chrono::nanoseconds(0));
+    tf2::TimePoint time_point =
+      tf2::TimePoint(std::chrono::seconds(0) + std::chrono::nanoseconds(0));
     try {
-      geometry_msgs::msg::TransformStamped transform_stamped =
-        buffer_.lookupTransform(
-        target_frame_id, point.header.frame_id,
-        time_point, tf2::durationFromSec(1.0));
+      geometry_msgs::msg::TransformStamped transform_stamped = buffer_.lookupTransform(
+        target_frame_id, point.header.frame_id, time_point, tf2::durationFromSec(1.0));
       tf2::doTransform(point, point, transform_stamped);
       return point;
     } catch (...) {
@@ -151,18 +142,21 @@ boost::optional<geometry_msgs::msg::PointStamped> CostmapToPolygonComponent::tra
     }
   }
 }
-double cross(const geometry_msgs::msg::Point32 &O, const geometry_msgs::msg::Point32 &p0, const geometry_msgs::msg::Point32 &p1)
+double cross(
+  const geometry_msgs::msg::Point32 & O, const geometry_msgs::msg::Point32 & p0,
+  const geometry_msgs::msg::Point32 & p1)
 {
-	return (p0.x - O.x) * (p1.y - O.y) - (p0.y - O.y) * (p1.x - O.x);
+  return (p0.x - O.x) * (p1.y - O.y) - (p0.y - O.y) * (p1.x - O.x);
 }
 
-boost::optional<std::vector<geometry_msgs::msg::Polygon>> CostmapToPolygonComponent::getPolygons(const std::vector<geometry_msgs::msg::Point32> points)
+boost::optional<std::vector<geometry_msgs::msg::Polygon>> CostmapToPolygonComponent::getPolygons(
+  const std::vector<geometry_msgs::msg::Point32> points)
 {
   std::vector<geometry_msgs::msg::Polygon> polygons;
   geometry_msgs::msg::Polygon poly;
   std::vector<bool> is_connected;
   unsigned int num_points = points.size();
-  if (num_points<=3) {
+  if (num_points <= 3) {
     return polygons;
   }
   for (unsigned int i = 0; i < num_points; i++) {
@@ -173,16 +167,12 @@ boost::optional<std::vector<geometry_msgs::msg::Polygon>> CostmapToPolygonCompon
     } else {
       p0 = points[i];
       p1 = points[i + 1];
-    
     }
     double l = std::hypot(p0.x - p1.x, p0.y - p1.y);
     double d0 = std::hypot(p0.x, p0.y);
     double d1 = std::hypot(p1.x, p1.y);
     double dist_threashold = boost::algorithm::clamp(
-      std::min(
-        d0,
-        d1) * distance_ratio_, min_segment_distance_,
-      max_segment_distance_);
+      std::min(d0, d1) * distance_ratio_, min_segment_distance_, max_segment_distance_);
     if (l > dist_threashold) {
       is_connected.push_back(false);
       continue;
@@ -200,46 +190,47 @@ boost::optional<std::vector<geometry_msgs::msg::Polygon>> CostmapToPolygonCompon
       buf.clear();
     }
   }
-  if (is_connected[is_connected.size() - 1]&&connect_polygons.size()>0) {
-  std::vector<geometry_msgs::msg::Point32> start_poly = connect_polygons[0].points;
-  std::vector<geometry_msgs::msg::Point32> end_poly = connect_polygons[connect_polygons.size() - 1].points;
-  end_poly.insert(end_poly.end(), start_poly.begin(), start_poly.end());
-  connect_polygons.erase(connect_polygons.begin());
-  connect_polygons.erase(connect_polygons.end());
-  geometry_msgs::msg::Polygon poly;
-  poly.points = end_poly;
-  connect_polygons.push_back(poly);
+  if (is_connected[is_connected.size() - 1] && connect_polygons.size() > 0) {
+    std::vector<geometry_msgs::msg::Point32> start_poly = connect_polygons[0].points;
+    std::vector<geometry_msgs::msg::Point32> end_poly =
+      connect_polygons[connect_polygons.size() - 1].points;
+    end_poly.insert(end_poly.end(), start_poly.begin(), start_poly.end());
+    connect_polygons.erase(connect_polygons.begin());
+    connect_polygons.erase(connect_polygons.end());
+    geometry_msgs::msg::Polygon poly;
+    poly.points = end_poly;
+    connect_polygons.push_back(poly);
   }
-  unsigned int num_polygon=connect_polygons.size();
-  for(unsigned int j = 0; j < num_polygon; j++)
-  {
-    std::vector<geometry_msgs::msg::Point32> costmap_points=connect_polygons[j].points;
-    size_t k=0;
-    size_t Convex_num_points=costmap_points.size();
-    if (Convex_num_points<=3) {
-    return polygons;
+  unsigned int num_polygon = connect_polygons.size();
+  for (unsigned int j = 0; j < num_polygon; j++) {
+    std::vector<geometry_msgs::msg::Point32> costmap_points = connect_polygons[j].points;
+    size_t k = 0;
+    size_t Convex_num_points = costmap_points.size();
+    if (Convex_num_points <= 3) {
+      return polygons;
     }
-    std::vector<geometry_msgs::msg::Point32> Convex_hull_point(2*Convex_num_points);
+    std::vector<geometry_msgs::msg::Point32> Convex_hull_point(2 * Convex_num_points);
     for (unsigned int i = 0; i < Convex_num_points; i++) {
-      while(k>2&&cross(Convex_hull_point[k-2],Convex_hull_point[k-1],costmap_points[i])<=0) k--;
-          Convex_hull_point[k++]=costmap_points[i];
-      // } 
-    }
-    for (unsigned int i = Convex_num_points-1, t = k+1; i > 0; --i) {
-      while (k >= t && cross(Convex_hull_point[k-2], Convex_hull_point[k-1], costmap_points[i-1]) <= 0) k--;
-        Convex_hull_point[k++] = costmap_points[i-1];
+      while (k > 2 &&
+             cross(Convex_hull_point[k - 2], Convex_hull_point[k - 1], costmap_points[i]) <= 0)
+        k--;
+      Convex_hull_point[k++] = costmap_points[i];
       // }
     }
-    Convex_hull_point.resize(k-1);
-    poly.points=Convex_hull_point;
+    for (unsigned int i = Convex_num_points - 1, t = k + 1; i > 0; --i) {
+      while (k >= t &&
+             cross(Convex_hull_point[k - 2], Convex_hull_point[k - 1], costmap_points[i - 1]) <= 0)
+        k--;
+      Convex_hull_point[k++] = costmap_points[i - 1];
+      // }
+    }
+    Convex_hull_point.resize(k - 1);
+    poly.points = Convex_hull_point;
     polygons.push_back(poly);
     costmap_points.clear();
-  } 
-  return polygons;    
-
+  }
+  return polygons;
 }
-
-
 
 visualization_msgs::msg::MarkerArray CostmapToPolygonComponent::generateDeleteMarker()
 {
@@ -273,8 +264,7 @@ visualization_msgs::msg::MarkerArray CostmapToPolygonComponent::generateMarker(
     marker.color.b = 0.0;
     marker.color.a = 1.0;
     for (auto point_itr = poly_itr->points.begin(); point_itr != poly_itr->points.end();
-      point_itr++)
-    {
+         point_itr++) {
       geometry_msgs::msg::PointStamped p;
       p.point.x = point_itr->x;
       p.point.y = point_itr->y;
@@ -295,5 +285,5 @@ visualization_msgs::msg::MarkerArray CostmapToPolygonComponent::generateMarker(
   }
   return marker_array;
 }
-  // namespace robotx_costmap_calculator
+// namespace robotx_costmap_calculator
 RCLCPP_COMPONENTS_REGISTER_NODE(robotx_costmap_calculator::CostmapToPolygonComponent)

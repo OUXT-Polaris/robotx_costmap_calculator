@@ -58,22 +58,22 @@ extern "C" {
 }  // extern "
 #endif
 
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
+
+#include <boost/optional.hpp>
+#include <geometry_msgs/msg/point32.hpp>
+#include <geometry_msgs/msg/polygon.hpp>
 #include <grid_map_core/GridMap.hpp>
 #include <grid_map_core/iterators/GridMapIterator.hpp>
 #include <grid_map_msgs/msg/grid_map.hpp>
 #include <grid_map_ros/grid_map_ros.hpp>
 #include <memory>
 #include <pcl_apps_msgs/msg/polygon_array.hpp>
-#include <geometry_msgs/msg/polygon.hpp>
-#include <geometry_msgs/msg/point32.hpp>
-#include <visualization_msgs/msg/marker_array.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <string>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#include <tf2_ros/transform_listener.h>
-#include <tf2_ros/buffer.h>
-
-#include <boost/optional.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
 
 namespace robotx_costmap_calculator
 {
@@ -95,10 +95,11 @@ private:
   visualization_msgs::msg::MarkerArray generateMarker(
     std::vector<geometry_msgs::msg::Polygon> polygons, std_msgs::msg::Header header);
   visualization_msgs::msg::MarkerArray generateDeleteMarker();
-  boost::optional<std::vector<geometry_msgs::msg::Polygon>> getPolygons(const std::vector<geometry_msgs::msg::Point32> points);
+  boost::optional<std::vector<geometry_msgs::msg::Polygon>> getPolygons(
+    const std::vector<geometry_msgs::msg::Point32> points);
   tf2_ros::Buffer buffer_;
   tf2_ros::TransformListener listener_;
-  std::string output_frame_id_;  
+  std::string output_frame_id_;
   std::string visualize_frame_id_;
   size_t previous_marker_size_;
   double max_segment_distance_;
