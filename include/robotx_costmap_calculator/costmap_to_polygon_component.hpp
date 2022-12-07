@@ -64,8 +64,16 @@ extern "C" {
 #include <grid_map_ros/grid_map_ros.hpp>
 #include <memory>
 #include <pcl_apps_msgs/msg/polygon_array.hpp>
+#include <geometry_msgs/msg/polygon.hpp>
+#include <geometry_msgs/msg/point32.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <string>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_ros/buffer.h>
+
+#include <boost/optional.hpp>
 
 namespace robotx_costmap_calculator
 {
@@ -76,8 +84,26 @@ public:
   explicit CostmapToPolygonComponent(const rclcpp::NodeOptions & options);
 
 private:
+  rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr grid_map_pub_;
   rclcpp::Subscription<grid_map_msgs::msg::GridMap>::SharedPtr grid_map_sub_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr marker_pub_;
   void gridmapCallback(const grid_map_msgs::msg::GridMap::SharedPtr msg);
+  visualization_msgs::msg::MarkerArray generateMarker(
+    geometry_msgs::msg::Polygon polygons, std_msgs::msg::Header header);
+  boost::optional<geometry_msgs::msg::PointStamped> transform(
+    geometry_msgs::msg::PointStamped point, std::string target_frame_id, bool exact = false);
+  visualization_msgs::msg::MarkerArray generateMarker(
+    std::vector<geometry_msgs::msg::Polygon> polygons, std_msgs::msg::Header header);
+  visualization_msgs::msg::MarkerArray generateDeleteMarker();
+  boost::optional<std::vector<geometry_msgs::msg::Polygon>> getPolygons(const std::vector<geometry_msgs::msg::Point32> points);
+  tf2_ros::Buffer buffer_;
+  tf2_ros::TransformListener listener_;
+  std::string output_frame_id_;  
+  std::string visualize_frame_id_;
+  size_t previous_marker_size_;
+  double max_segment_distance_;
+  double min_segment_distance_;
+  double distance_ratio_;
 };
 }  // namespace robotx_costmap_calculator
 
