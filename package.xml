@@ -15,9 +15,7 @@
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>sensor_msgs</depend>
-  <depend>grid_map_msgs</depend>
-  <depend>grid_map_core</depend>
-  <depend>grid_map_ros</depend>
+  <depend>grid_map</depend>
   <depend>pcl_conversions</depend>
   <depend>eigen</depend>
   <depend>libpcl-all-dev</depend>
