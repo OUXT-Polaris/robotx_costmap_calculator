@@ -74,6 +74,7 @@ extern "C" {
 #include <rclcpp/rclcpp.hpp>
 #include <string>
 #include <visualization_msgs/msg/marker_array.hpp>
+#include <std_msgs/msg/float32.hpp>
 
 namespace robotx_costmap_calculator
 {
@@ -87,6 +88,7 @@ private:
   rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr grid_map_pub_;
   rclcpp::Subscription<grid_map_msgs::msg::GridMap>::SharedPtr grid_map_sub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr marker_pub_;
+  rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr debug_pub_;
   void gridmapCallback(const grid_map_msgs::msg::GridMap::SharedPtr msg);
   visualization_msgs::msg::MarkerArray generateMarker(
     geometry_msgs::msg::Polygon polygons, std_msgs::msg::Header header);
@@ -97,6 +99,7 @@ private:
   visualization_msgs::msg::MarkerArray generateDeleteMarker();
   boost::optional<std::vector<geometry_msgs::msg::Polygon>> getPolygons(
     const std::vector<geometry_msgs::msg::Point32> points);
+  double cross(const geometry_msgs::msg::Point32 & O, const geometry_msgs::msg::Point32 & p0,const geometry_msgs::msg::Point32 & p1);
   tf2_ros::Buffer buffer_;
   tf2_ros::TransformListener listener_;
   std::string output_frame_id_;

@@ -54,8 +54,8 @@ CostmapToPolygonComponent::CostmapToPolygonComponent(const rclcpp::NodeOptions &
     std::bind(&CostmapToPolygonComponent::gridmapCallback, this, std::placeholders::_1));
 
   grid_map_pub_ = create_publisher<grid_map_msgs::msg::GridMap>("~/roundcheck_grid_map", 1);
-
   marker_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("~/marker", 1);
+  debug_pub_ = this->create_publisher<std_msgs::msg::Float32>("~/debug", 1);
 }
 
 void CostmapToPolygonComponent::gridmapCallback(const grid_map_msgs::msg::GridMap::SharedPtr msg)
@@ -142,10 +142,14 @@ boost::optional<geometry_msgs::msg::PointStamped> CostmapToPolygonComponent::tra
     }
   }
 }
-double cross(
+double CostmapToPolygonComponent::cross(
   const geometry_msgs::msg::Point32 & O, const geometry_msgs::msg::Point32 & p0,
   const geometry_msgs::msg::Point32 & p1)
 {
+  std_msgs::msg::Float32 cross_msg;
+  double cross = (p0.x - O.x) * (p1.y - O.y) - (p0.y - O.y) * (p1.x - O.x);
+  cross_msg.data=static_cast<float>(cross);
+  debug_pub_->publish(cross_msg);
   return (p0.x - O.x) * (p1.y - O.y) - (p0.y - O.y) * (p1.x - O.x);
 }
 
@@ -224,6 +228,7 @@ boost::optional<std::vector<geometry_msgs::msg::Polygon>> CostmapToPolygonCompon
     }
     Convex_hull_point.resize(k - 1);
     poly.points = Convex_hull_point;
+    poly.points.push_back(Convex_hull_point[0]);
     polygons.push_back(poly);
     costmap_points.clear();
   }
@@ -261,12 +266,19 @@ visualization_msgs::msg::MarkerArray CostmapToPolygonComponent::generateMarker(
     marker.color.g = 0.0;
     marker.color.b = 0.0;
     marker.color.a = 1.0;
+    int number;
+    number=0;
     for (auto point_itr = poly_itr->points.begin(); point_itr != poly_itr->points.end();
          point_itr++) {
       geometry_msgs::msg::PointStamped p;
       p.point.x = point_itr->x;
       p.point.y = point_itr->y;
       p.point.z = point_itr->z;
+
+      number++;
+      // RCLCPP_INFO(get_logger(), "point_number is %d",number);
+      // RCLCPP_INFO(get_logger(), "point:x is %f",p.point.x);
+      // RCLCPP_INFO(get_logger(), "point:y is %f",p.point.y);
       p.header = header;
       p.header.frame_id = output_frame_id_;
       auto p_transformed = transform(p, visualize_frame_id_, false);
