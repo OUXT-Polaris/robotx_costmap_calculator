@@ -9,7 +9,6 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   <build_depend>grid_map_cmake_helpers</build_depend>
-  <build_depend>eigen_conversions</build_depend>
 
   <depend>ament_cmake_auto</depend>
   <depend>rclcpp</depend>
