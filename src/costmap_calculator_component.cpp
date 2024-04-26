@@ -33,6 +33,7 @@ CostmapCalculatorComponent::CostmapCalculatorComponent(const rclcpp::NodeOptions
 : Node("robotx_costmap_calculator", options)
 {
   std::string points_raw_topic;
+  //頑張るぞー！
   std::string laserscan_raw_topic;
   std::string current_pose_topic;
   declare_parameter<std::string>("points_raw_topic", "/perception/points_concatenate_node/output");
