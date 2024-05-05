@@ -33,13 +33,9 @@ CostmapCalculatorComponent::CostmapCalculatorComponent(const rclcpp::NodeOptions
 : Node("robotx_costmap_calculator", options)
 {
   std::string points_raw_topic;
-  std::string laserscan_raw_topic;
   std::string current_pose_topic;
   declare_parameter<std::string>("points_raw_topic", "/perception/points_concatenate_node/output");
   get_parameter("points_raw_topic", points_raw_topic);
-  declare_parameter<std::string>(
-    "laserscan_raw_topic", "/perception/pointcloud_to_laserscan_node/output");
-  get_parameter("laserscan_raw_topic", laserscan_raw_topic);
   declare_parameter<std::string>("current_pose_topic", "/current_pose");
   get_parameter("current_pose_topic", current_pose_topic);
   declare_parameter("resolution", 1.0);
@@ -53,25 +49,18 @@ CostmapCalculatorComponent::CostmapCalculatorComponent(const rclcpp::NodeOptions
   double buffer_length;
   declare_parameter("buffer_length", 5.0);
   get_parameter("buffer_length", buffer_length);
-  declare_parameter("scan_buffer_size", 2);
-  get_parameter("scan_buffer_size", scan_buffer_size_);
+  declare_parameter("cloud_buffer_size", 2);
+  get_parameter("cloud_buffer_size", cloud_buffer_size_);
   declare_parameter("forgetting_rate", 0.6);
   get_parameter("forgetting_rate", forgetting_rate_);
-  declare_parameter<bool>("use_scan", true);
-  get_parameter("use_scan", use_scan_);
+  initGridMap();
   std::string key;
   pose_buffer_ =
     std::make_shared<data_buffer::PoseStampedDataBuffer>(get_clock(), key, buffer_length);
 
-  if (use_scan_) {
-    laserscan_sub_ = create_subscription<sensor_msgs::msg::LaserScan>(
-      laserscan_raw_topic, 10,
-      std::bind(&CostmapCalculatorComponent::scanCallback, this, std::placeholders::_1));
-  } else {
-    pointcloud_sub_ = create_subscription<sensor_msgs::msg::PointCloud2>(
-      points_raw_topic, 10,
-      std::bind(&CostmapCalculatorComponent::pointCloudCallback, this, std::placeholders::_1));
-  }
+  pointcloud_sub_ = create_subscription<sensor_msgs::msg::PointCloud2>(
+    points_raw_topic, 10,
+    std::bind(&CostmapCalculatorComponent::pointCloudCallback, this, std::placeholders::_1));
 
   pose_sub_ = create_subscription<geometry_msgs::msg::PoseStamped>(
     current_pose_topic, 10,
@@ -80,10 +69,7 @@ CostmapCalculatorComponent::CostmapCalculatorComponent(const rclcpp::NodeOptions
   grid_map_pub_ = create_publisher<grid_map_msgs::msg::GridMap>("grid_map", 1);
 
   cloud_buffer_ =
-    boost::circular_buffer<sensor_msgs::msg::PointCloud2::SharedPtr>(scan_buffer_size_);
-  scan_buffer_ = boost::circular_buffer<sensor_msgs::msg::LaserScan::SharedPtr>(scan_buffer_size_);
-
-  initGridMap();
+    boost::circular_buffer<sensor_msgs::msg::PointCloud2::SharedPtr>(cloud_buffer_size_);
 }
 
 void CostmapCalculatorComponent::initGridMap()
@@ -107,61 +93,6 @@ void CostmapCalculatorComponent::poseCallback(const geometry_msgs::msg::PoseStam
   return;
 }
 
-void CostmapCalculatorComponent::scanCallback(const sensor_msgs::msg::LaserScan::SharedPtr scan)
-{
-  scan_buffer_.push_back(scan);
-  geometry_msgs::msg::PoseStamped scan_pose;
-  if (!pose_buffer_->queryData(scan->header.stamp, scan_pose)) {
-    return;
-  }
-  for (size_t j = 0; j < scan_buffer_.size(); j++) {
-    std::stringstream ss;
-    ss << j;
-    std::string scan_layer_name("scan_layer" + ss.str());
-    if (j == scan_buffer_.size() - 1) {
-      addPointsToGridMap(transformScanPoints(*scan_buffer_[j]), scan_layer_name);
-    } else {
-      geometry_msgs::msg::PoseStamped prev_scan_pose;
-      if (!pose_buffer_->queryData(scan_buffer_[j]->header.stamp, prev_scan_pose)) {
-        return;
-      }
-      addPointsToGridMap(
-        transformScanPoints(*scan_buffer_[j], getRelativePose(scan_pose.pose, prev_scan_pose.pose)),
-        scan_layer_name);
-    }
-  }
-  combine();
-  publish();
-  return;
-}
-
-std::vector<geometry_msgs::msg::Point> CostmapCalculatorComponent::transformScanPoints(
-  const sensor_msgs::msg::LaserScan & scan, const geometry_msgs::msg::Pose & pose) const
-{
-  std::vector<geometry_msgs::msg::Point> ret;
-  Eigen::Matrix3d scan_rotation_matrix;
-  scan_rotation_matrix = quaternion_operation::getRotationMatrix(pose.orientation);
-  for (int i = 0; i < static_cast<int>(scan.ranges.size()); i++) {
-    if (range_max_ >= scan.ranges[i]) {
-      double theta = scan.angle_min + scan.angle_increment * static_cast<double>(i);
-      Eigen::VectorXd v(3);
-      v(0) = scan.ranges[i] * std::cos(theta);
-      v(1) = scan.ranges[i] * std::sin(theta);
-      v(2) = 0;
-      v = scan_rotation_matrix * v;
-      v(0) = v(0) + pose.position.x;
-      v(1) = v(1) + pose.position.y;
-      v(2) = v(2) + pose.position.z;
-      geometry_msgs::msg::Point transformed;
-      transformed.x = v(0);
-      transformed.y = v(1);
-      transformed.z = v(2);
-      ret.emplace_back(transformed);
-    }
-  }
-  return ret;
-}
-
 void CostmapCalculatorComponent::pointCloudCallback(
   const sensor_msgs::msg::PointCloud2::SharedPtr cloud)
 {
@@ -181,11 +112,8 @@ void CostmapCalculatorComponent::pointCloudCallback(
       scan_orientation =
         quaternion_operation::getRotation(poses.pose.orientation, current_pose_orientation);
       rotation_matrix = quaternion_operation::getRotationMatrix(scan_orientation);
-      //rotation_matrix=quaternion_operation::getRotationMatrix(poses.pose.orientation);
       Eigen::Matrix4d transform_matrix = Eigen::Matrix4d::Identity();
       transform_matrix.block<3, 3>(0, 0) = rotation_matrix;
-      //transform_matrix.block<3, 1>(0, 3) =
-      //Eigen::Vector3d(poses.pose.position.x, poses.pose.position.y, poses.pose.position.z);
       pcl::transformPointCloud(*transform_cloud, *transform_cloud, transform_matrix);
       pcl::toROSMsg(*transform_cloud, *cloud_buffer_[i]);
     }
@@ -208,38 +136,10 @@ void CostmapCalculatorComponent::publish()
 void CostmapCalculatorComponent::combine()
 {
   grid_map_.add("combined", 0.0);
-  if (use_scan_) {
-    if (scan_buffer_.size() == scan_buffer_size_) {
-      for (size_t i = 0; i < scan_buffer_size_; i++) {
-        grid_map_["combined"] =
-          std::pow(forgetting_rate_, i - 1) * grid_map_["scan_layer" + std::to_string(i)];
-      }
-    }
-  } else {
-    if (cloud_buffer_.size() == scan_buffer_size_) {
-      for (size_t i = 0; i < scan_buffer_size_; i++) {
-        grid_map_["combined"] =
-          std::pow(forgetting_rate_, i - 1) * grid_map_["point_layer" + std::to_string(i)];
-      }
-    }
-  }
-}
-
-void CostmapCalculatorComponent::addPointsToGridMap(
-  const std::vector<geometry_msgs::msg::Point> & points, const std::string & scan_layer_name)
-{
-  grid_map_.add(scan_layer_name, 0.0);
-  for (const auto & point : points) {
-    for (grid_map::CircleIterator iterator(
-           grid_map_, grid_map::Position(point.x, point.y), resolution_ * 0.5);
-         !iterator.isPastEnd(); ++iterator) {
-      if (std::isnan(grid_map_.at(scan_layer_name, *iterator))) {
-        grid_map_.at(scan_layer_name, *iterator) = 0.0;
-      } else {
-        if (grid_map_.at(scan_layer_name, *iterator) < 1.0) {
-          grid_map_.at(scan_layer_name, *iterator) = grid_map_.at(scan_layer_name, *iterator) + 0.1;
-        }
-      }
+  if (cloud_buffer_.size() == cloud_buffer_size_) {
+    for (size_t i = 0; i < cloud_buffer_size_; i++) {
+      grid_map_["combined"] =
+        std::pow(forgetting_rate_, i - 1) * grid_map_["point_layer" + std::to_string(i)];
     }
   }
 }
@@ -274,44 +174,6 @@ void CostmapCalculatorComponent::addPointCloudToGridMap(
       grid_map_.at(grid_map_layer_name, *iterator) = sigmoid(1.0, 0.0, (double)num_points);
     }
   }
-}
-
-const geometry_msgs::msg::Pose CostmapCalculatorComponent::getRelativePose(
-  const geometry_msgs::msg::Pose & from, const geometry_msgs::msg::Pose & to) const
-{
-  geometry_msgs::msg::Transform from_translation;
-  {
-    from_translation.translation.x = from.position.x;
-    from_translation.translation.y = from.position.y;
-    from_translation.translation.z = from.position.z;
-    from_translation.rotation = from.orientation;
-  }
-
-  tf2::Transform from_tf;
-  {
-    tf2::fromMsg(from_translation, from_tf);
-  }
-
-  geometry_msgs::msg::Transform to_translation;
-  {
-    to_translation.translation.x = to.position.x;
-    to_translation.translation.y = to.position.y;
-    to_translation.translation.z = to.position.z;
-    to_translation.rotation = to.orientation;
-  }
-
-  tf2::Transform to_tf;
-  {
-    tf2::fromMsg(to_translation, to_tf);
-  }
-
-  tf2::Transform tf_delta = from_tf.inverse() * to_tf;
-
-  geometry_msgs::msg::Pose ret;
-  {
-    tf2::toMsg(tf_delta, ret);
-  }
-  return ret;
 }
 }  // namespace robotx_costmap_calculator
 
