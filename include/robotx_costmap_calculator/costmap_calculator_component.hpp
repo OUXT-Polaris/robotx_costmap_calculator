@@ -96,35 +96,21 @@ public:
 private:
   rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr grid_map_pub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_sub_;
-  rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr laserscan_sub_;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr pose_sub_;
   void initGridMap();
   void pointCloudCallback(const sensor_msgs::msg::PointCloud2::SharedPtr cloud);
-  void scanCallback(const sensor_msgs::msg::LaserScan::SharedPtr scan);
   void poseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr pose);
   boost::circular_buffer<sensor_msgs::msg::PointCloud2::SharedPtr> cloud_buffer_;
-  boost::circular_buffer<sensor_msgs::msg::LaserScan::SharedPtr> scan_buffer_;
   grid_map::GridMap grid_map_;
-  std::vector<geometry_msgs::msg::Point> transformScanPoints(
-    const sensor_msgs::msg::LaserScan & scan,
-    const geometry_msgs::msg::Pose & pose = geometry_msgs::msg::Pose()) const;
-  void addPointsToGridMap(
-    const std::vector<geometry_msgs::msg::Point> & points, const std::string & scan_layer_name);
   void addPointCloudToGridMap(
     const sensor_msgs::msg::PointCloud2 & cloud, const std::string & grid_map_layer_name);
   void combine();
   void publish();
-  std::string output_topic_;
-  double update_rate_;
   double resolution_;
-  double laser_resolution_;
-  rclcpp::Time timestamp_;
   int num_grids_;
-  int laser_num_grids_;
   double range_max_;
   double forgetting_rate_;
-  bool use_scan_;
-  size_t scan_buffer_size_;
+  size_t cloud_buffer_size_;
   std::string visualize_frame_id_;
   std::shared_ptr<data_buffer::PoseStampedDataBuffer> pose_buffer_;
   const geometry_msgs::msg::Pose getRelativePose(
