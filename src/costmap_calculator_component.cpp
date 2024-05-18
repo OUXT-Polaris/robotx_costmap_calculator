@@ -32,11 +32,13 @@ namespace robotx_costmap_calculator
 CostmapCalculatorComponent::CostmapCalculatorComponent(const rclcpp::NodeOptions & options)
 : Node("robotx_costmap_calculator", options)
 {
+  //Nodeは基底クラス
   std::string points_raw_topic;
-  //頑張るぞー！
   std::string laserscan_raw_topic;
   std::string current_pose_topic;
-  declare_parameter<std::string>("points_raw_topic", "/perception/points_concatenate_node/output");
+  std::string a = "points_raw_topic";
+
+  declare_parameter<std::string>(a, "/perception/points_concatenate_node/output");
   get_parameter("points_raw_topic", points_raw_topic);
   declare_parameter<std::string>(
     "laserscan_raw_topic", "/perception/pointcloud_to_laserscan_node/output");
@@ -60,7 +62,9 @@ CostmapCalculatorComponent::CostmapCalculatorComponent(const rclcpp::NodeOptions
   get_parameter("forgetting_rate", forgetting_rate_);
   declare_parameter<bool>("use_scan", true);
   get_parameter("use_scan", use_scan_);
+  initGridMap();
   std::string key;
+  //共有ポインタを作る
   pose_buffer_ =
     std::make_shared<data_buffer::PoseStampedDataBuffer>(get_clock(), key, buffer_length);
 
@@ -84,9 +88,9 @@ CostmapCalculatorComponent::CostmapCalculatorComponent(const rclcpp::NodeOptions
     boost::circular_buffer<sensor_msgs::msg::PointCloud2::SharedPtr>(scan_buffer_size_);
   scan_buffer_ = boost::circular_buffer<sensor_msgs::msg::LaserScan::SharedPtr>(scan_buffer_size_);
 
-  initGridMap();
 }
 
+//アルゴリズム
 void CostmapCalculatorComponent::initGridMap()
 {
   grid_map_.setFrameId("base_link");
@@ -102,17 +106,21 @@ double sigmoid(double a, double b, double x)
   return ret;
 }
 
+//グローバル座標を取得(ロボットの現在の姿勢情報から)
 void CostmapCalculatorComponent::poseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr pose)
 {
   pose_buffer_->addData(*pose);
   return;
 }
 
+//グローバル座標を取得(スキャンデータから)
+//２Dなので消す
 void CostmapCalculatorComponent::scanCallback(const sensor_msgs::msg::LaserScan::SharedPtr scan)
 {
   scan_buffer_.push_back(scan);
   geometry_msgs::msg::PoseStamped scan_pose;
   if (!pose_buffer_->queryData(scan->header.stamp, scan_pose)) {
+    //指定されたタイムスタンプに対応する姿勢情報を返す
     return;
   }
   for (size_t j = 0; j < scan_buffer_.size(); j++) {
@@ -136,6 +144,7 @@ void CostmapCalculatorComponent::scanCallback(const sensor_msgs::msg::LaserScan:
   return;
 }
 
+//ロボット座標系に変換
 std::vector<geometry_msgs::msg::Point> CostmapCalculatorComponent::transformScanPoints(
   const sensor_msgs::msg::LaserScan & scan, const geometry_msgs::msg::Pose & pose) const
 {
@@ -146,10 +155,12 @@ std::vector<geometry_msgs::msg::Point> CostmapCalculatorComponent::transformScan
     if (range_max_ >= scan.ranges[i]) {
       double theta = scan.angle_min + scan.angle_increment * static_cast<double>(i);
       Eigen::VectorXd v(3);
+      //極座標から直交座標に
       v(0) = scan.ranges[i] * std::cos(theta);
       v(1) = scan.ranges[i] * std::sin(theta);
       v(2) = 0;
       v = scan_rotation_matrix * v;
+      //ロボット座標系に変換
       v(0) = v(0) + pose.position.x;
       v(1) = v(1) + pose.position.y;
       v(2) = v(2) + pose.position.z;
@@ -163,6 +174,7 @@ std::vector<geometry_msgs::msg::Point> CostmapCalculatorComponent::transformScan
   return ret;
 }
 
+//3D点群をバッファなど
 void CostmapCalculatorComponent::pointCloudCallback(
   const sensor_msgs::msg::PointCloud2::SharedPtr cloud)
 {
@@ -170,6 +182,7 @@ void CostmapCalculatorComponent::pointCloudCallback(
   for (size_t i = 0; i < cloud_buffer_.size(); i++) {
     std::stringstream cloud_ss;
     if (i > 0) {
+      //最新の点群が取得された時刻のロボット座標に変換(運動補償)
       pcl::PointCloud<pcl::PointXYZ>::Ptr transform_cloud(new pcl::PointCloud<pcl::PointXYZ>());
       pcl::fromROSMsg(*cloud_buffer_[i], *transform_cloud);
       geometry_msgs::msg::PoseStamped poses;
@@ -190,6 +203,7 @@ void CostmapCalculatorComponent::pointCloudCallback(
       pcl::transformPointCloud(*transform_cloud, *transform_cloud, transform_matrix);
       pcl::toROSMsg(*transform_cloud, *cloud_buffer_[i]);
     }
+
     cloud_ss << i;
     std::string point_current_layer_name("point_layer" + cloud_ss.str());
     addPointCloudToGridMap(*cloud_buffer_[i], point_current_layer_name);
@@ -206,6 +220,7 @@ void CostmapCalculatorComponent::publish()
   grid_map_pub_->publish(std::move(msg));
 }
 
+//コストの付け方かえる
 void CostmapCalculatorComponent::combine()
 {
   grid_map_.add("combined", 0.0);
@@ -226,6 +241,7 @@ void CostmapCalculatorComponent::combine()
   }
 }
 
+//点群を判定
 void CostmapCalculatorComponent::addPointsToGridMap(
   const std::vector<geometry_msgs::msg::Point> & points, const std::string & scan_layer_name)
 {
@@ -245,6 +261,7 @@ void CostmapCalculatorComponent::addPointsToGridMap(
   }
 }
 
+//コストをつける
 void CostmapCalculatorComponent::addPointCloudToGridMap(
   const sensor_msgs::msg::PointCloud2 & cloud, const std::string & grid_map_layer_name)
 {
@@ -269,6 +286,7 @@ void CostmapCalculatorComponent::addPointCloudToGridMap(
     pass.setFilterLimits(y_min, y_max);
     pass.filter(*cloud_filtered);
     int num_points = cloud_filtered->size();
+    //日化
     if (num_points == 0) {
       grid_map_.at(grid_map_layer_name, *iterator) = 0.0;
     } else {
