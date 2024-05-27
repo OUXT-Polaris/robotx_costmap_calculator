@@ -84,6 +84,12 @@ double sigmoid(double a, double b, double x)
 {
   double ret;
   ret = 1 / (1 + std::exp(-a * (x - b)));
+  if(ret > 0.5){
+    ret = 1;
+  }
+  else{
+    ret = 0;
+  }
   return ret;
 }
 
@@ -137,12 +143,37 @@ void CostmapCalculatorComponent::combine()
 {
   grid_map_.add("combined", 0.0);
   if (cloud_buffer_.size() == cloud_buffer_size_) {
+  //   for (size_t i = 0; i < cloud_buffer_size_; i++) {
+     
+  //     grid_map_["combined"] =
+  //       std::pow(forgetting_rate_, i - 1) * grid_map_["point_layer" + std::to_string(i)];
+  //   }
+
+    //以下修正
     for (size_t i = 0; i < cloud_buffer_size_; i++) {
-      grid_map_["combined"] =
-        std::pow(forgetting_rate_, i - 1) * grid_map_["point_layer" + std::to_string(i)];
+      double sum_log_odds = 0.0;
+
+      // for (grid_map::GridMapIterator iterator(grid_map_); !iterator.isPastEnd(); ++iterator) {
+      //   double previous_prob = grid_map_.at("combined", *iterator);
+      //   double previous_log_odds = std::log(previous_prob / (1 - previous_prob));
+
+      if(ret == 1){
+        double measurement_log_odds = std::log(0.8 / 0.2);  // log{p(m_i/z_t,x_t)/(1-p(m_i/z_t,x_t))}を0.8とする
+      }
+      else{
+        double measurement_log_odds = std::log(0.2 / 0.8);
+      }
+      
+      sum_log_odds += measurement_log_odds;
     }
-  }
+    // オッズを確率に変える
+    double sum_prob = 1.0 - 1.0/(1.0 + std::exp(sum_log_odds));
+
+    // あるレイヤーのあるセルに最終的な確率を格納
+    grid_map_.at("combined", *iterator) = sum_prob;
+  }     
 }
+
 
 void CostmapCalculatorComponent::addPointCloudToGridMap(
   const sensor_msgs::msg::PointCloud2 & cloud, const std::string & grid_map_layer_name)
