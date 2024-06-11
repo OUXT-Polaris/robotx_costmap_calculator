@@ -67,7 +67,7 @@ CostmapCalculatorComponent::CostmapCalculatorComponent(const rclcpp::NodeOptions
     current_pose_topic, 10,
     std::bind(&CostmapCalculatorComponent::poseCallback, this, std::placeholders::_1));
 
-  grid_map_pub_ = create_publisher<grid_map_msgs::msg::GridMap>("grid_map", 1);
+  grid_map_pub_ = create_publisher<GridMapAdaptedType>("grid_map", 1);
 
   cloud_buffer_ = boost::circular_buffer<PCLPointCloudTypePtr>(cloud_buffer_size_);
 }
@@ -133,9 +133,8 @@ void CostmapCalculatorComponent::pointCloudCallback(const PCLPointCloudTypePtr c
 
 void CostmapCalculatorComponent::publish()
 {
-  auto msg = grid_map::GridMapRosConverter::toMessage(grid_map_);
-  msg->header.stamp = get_clock()->now();
-  grid_map_pub_->publish(std::move(msg));
+  grid_map_.setTimestamp(get_clock()->now().nanoseconds());
+  grid_map_pub_->publish(grid_map_);
 }
 
 void CostmapCalculatorComponent::combine()

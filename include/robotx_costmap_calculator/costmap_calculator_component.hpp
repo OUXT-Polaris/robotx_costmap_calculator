@@ -79,6 +79,7 @@ extern "C" {
 #include <grid_map_core/iterators/GridMapIterator.hpp>
 #include <grid_map_msgs/msg/grid_map.hpp>
 #include <grid_map_ros/grid_map_ros.hpp>
+#include <grid_map_type_adapter/type_adapter.hpp>
 #include <memory>
 #include <pcl_apps_msgs/msg/polygon_array.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -101,7 +102,7 @@ public:
   explicit CostmapCalculatorComponent(const rclcpp::NodeOptions & options);
 
 private:
-  rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr grid_map_pub_;
+  rclcpp::Publisher<GridMapAdaptedType>::SharedPtr grid_map_pub_;
   rclcpp::Subscription<PointCloudAdaptedType>::SharedPtr pointcloud_sub_;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr pose_sub_;
   void initGridMap();
