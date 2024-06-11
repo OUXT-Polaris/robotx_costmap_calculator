@@ -64,6 +64,7 @@ extern "C" {
 #include <grid_map_core/iterators/GridMapIterator.hpp>
 #include <grid_map_msgs/msg/grid_map.hpp>
 #include <grid_map_ros/grid_map_ros.hpp>
+#include <grid_map_type_adapter/type_adapter.hpp>
 #include <memory>
 #include <pcl_apps_msgs/msg/polygon_array.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -73,14 +74,16 @@ namespace robotx_costmap_calculator
 {
 class CostmapInterpolationComponent : public rclcpp::Node
 {
+  using GridMapAdaptedType = rclcpp::TypeAdapter<grid_map::GridMap, grid_map_msgs::msg::GridMap>;
+
 public:
   COSTMAP_CALCULATOR_COSTMAP_INTERPOLATION_COMPONENT_PUBLIC
   explicit CostmapInterpolationComponent(const rclcpp::NodeOptions & options);
 
 private:
-  rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr interpolation_map_pub_;
-  rclcpp::Subscription<grid_map_msgs::msg::GridMap>::SharedPtr grid_map_sub_;
-  void gridmapCallback(const grid_map_msgs::msg::GridMap::SharedPtr msg);
+  rclcpp::Publisher<GridMapAdaptedType>::SharedPtr interpolation_map_pub_;
+  rclcpp::Subscription<GridMapAdaptedType>::SharedPtr grid_map_sub_;
+  void gridmapCallback(const grid_map::GridMap & msg);
   void initGridMap();
 
   const std::map<std::string, grid_map::InterpolationMethods> interpolationMethods = {

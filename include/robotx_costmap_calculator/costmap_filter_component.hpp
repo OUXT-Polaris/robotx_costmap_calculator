@@ -61,6 +61,7 @@ extern "C" {
 #include <grid_map_core/iterators/GridMapIterator.hpp>
 #include <grid_map_msgs/msg/grid_map.hpp>
 #include <grid_map_ros/grid_map_ros.hpp>
+#include <grid_map_type_adapter/type_adapter.hpp>
 #include <memory>
 #include <pcl_apps_msgs/msg/polygon_array.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -70,14 +71,16 @@ namespace robotx_costmap_calculator
 {
 class CostmapFilterComponent : public rclcpp::Node
 {
+  using GridMapAdaptedType = rclcpp::TypeAdapter<grid_map::GridMap, grid_map_msgs::msg::GridMap>;
+
 public:
   COSTMAP_CALCULATOR_COSTMAP_FILTER_COMPONENT_PUBLIC
   explicit CostmapFilterComponent(const rclcpp::NodeOptions & options);
 
 private:
-  rclcpp::Subscription<grid_map_msgs::msg::GridMap>::SharedPtr grid_map_sub_;
-  void gridmapCallback(const grid_map_msgs::msg::GridMap::SharedPtr msg);
-  rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr filter_map_pub_;
+  rclcpp::Subscription<GridMapAdaptedType>::SharedPtr grid_map_sub_;
+  void gridmapCallback(const grid_map::GridMap & msg);
+  rclcpp::Publisher<GridMapAdaptedType>::SharedPtr filter_map_pub_;
   filters::FilterChain<grid_map::GridMap> filterChain_;
   std::string filterChainParametersName_;
 };
