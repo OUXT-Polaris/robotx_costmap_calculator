@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <pcl_conversions/pcl_conversions.h>
+
 #include <chrono>
 #include <data_buffer/data_buffer_base.hpp>
 #include <geometry_msgs/msg/transform.hpp>
@@ -58,9 +60,8 @@ CostmapCalculatorComponent::CostmapCalculatorComponent(const rclcpp::NodeOptions
   pose_buffer_ =
     std::make_shared<data_buffer::PoseStampedDataBuffer>(get_clock(), key, buffer_length);
 
-  pointcloud_sub_ = create_subscription<sensor_msgs::msg::PointCloud2>(
-    points_raw_topic, 10,
-    std::bind(&CostmapCalculatorComponent::pointCloudCallback, this, std::placeholders::_1));
+  pointcloud_sub_ = create_subscription<PointCloudAdaptedType>(
+    points_raw_topic, 10, [this](const PCLPointCloudTypePtr msg) { pointCloudCallback(msg); });
 
   pose_sub_ = create_subscription<geometry_msgs::msg::PoseStamped>(
     current_pose_topic, 10,
@@ -68,8 +69,7 @@ CostmapCalculatorComponent::CostmapCalculatorComponent(const rclcpp::NodeOptions
 
   grid_map_pub_ = create_publisher<grid_map_msgs::msg::GridMap>("grid_map", 1);
 
-  cloud_buffer_ =
-    boost::circular_buffer<sensor_msgs::msg::PointCloud2::SharedPtr>(cloud_buffer_size_);
+  cloud_buffer_ = boost::circular_buffer<PCLPointCloudTypePtr>(cloud_buffer_size_);
 }
 
 void CostmapCalculatorComponent::initGridMap()
@@ -93,17 +93,22 @@ void CostmapCalculatorComponent::poseCallback(const geometry_msgs::msg::PoseStam
   return;
 }
 
-void CostmapCalculatorComponent::pointCloudCallback(
-  const sensor_msgs::msg::PointCloud2::SharedPtr cloud)
+void CostmapCalculatorComponent::pointCloudCallback(const PCLPointCloudTypePtr cloud)
 {
   cloud_buffer_.push_back(cloud);
   for (size_t i = 0; i < cloud_buffer_.size(); i++) {
     std::stringstream cloud_ss;
     if (i > 0) {
-      pcl::PointCloud<pcl::PointXYZ>::Ptr transform_cloud(new pcl::PointCloud<pcl::PointXYZ>());
-      pcl::fromROSMsg(*cloud_buffer_[i], *transform_cloud);
+      PCLPointCloudTypePtr transform_cloud(new PCLPointCloudType());
+      transform_cloud = cloud_buffer_[i];
       geometry_msgs::msg::PoseStamped poses;
-      if (!pose_buffer_->queryData(cloud->header.stamp, poses)) {
+      if (!pose_buffer_->queryData(
+            [&]() {
+              rclcpp::Time stamp;
+              pcl_conversions::fromPCL(cloud->header.stamp, stamp);
+              return stamp;
+            }(),
+            poses)) {
         return;
       }
       Eigen::Matrix3d rotation_matrix;
@@ -115,11 +120,11 @@ void CostmapCalculatorComponent::pointCloudCallback(
       Eigen::Matrix4d transform_matrix = Eigen::Matrix4d::Identity();
       transform_matrix.block<3, 3>(0, 0) = rotation_matrix;
       pcl::transformPointCloud(*transform_cloud, *transform_cloud, transform_matrix);
-      pcl::toROSMsg(*transform_cloud, *cloud_buffer_[i]);
+      cloud_buffer_[i] = transform_cloud;
     }
     cloud_ss << i;
     std::string point_current_layer_name("point_layer" + cloud_ss.str());
-    addPointCloudToGridMap(*cloud_buffer_[i], point_current_layer_name);
+    addPointCloudToGridMap(cloud_buffer_[i], point_current_layer_name);
   }
   combine();
   publish();
@@ -145,13 +150,11 @@ void CostmapCalculatorComponent::combine()
 }
 
 void CostmapCalculatorComponent::addPointCloudToGridMap(
-  const sensor_msgs::msg::PointCloud2 & cloud, const std::string & grid_map_layer_name)
+  const PCLPointCloudTypePtr & cloud, const std::string & grid_map_layer_name)
 {
   grid_map_.add(grid_map_layer_name, 0.0);
-  pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_cloud(new pcl::PointCloud<pcl::PointXYZ>());
-  pcl::fromROSMsg(cloud, *pcl_cloud);
-  pcl::PassThrough<pcl::PointXYZ> pass;
-  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered(new pcl::PointCloud<pcl::PointXYZ>());
+  pcl::PassThrough<PCLPointType> pass;
+  PCLPointCloudTypePtr cloud_filtered(new PCLPointCloudType());
   for (grid_map::GridMapIterator iterator(grid_map_); !iterator.isPastEnd(); ++iterator) {
     grid_map::Position position;
     grid_map_.getPosition(*iterator, position);
@@ -159,7 +162,7 @@ void CostmapCalculatorComponent::addPointCloudToGridMap(
     double x_max = position.x() + (resolution_ * 0.5);
     double y_min = position.y() - (resolution_ * 0.5);
     double y_max = position.y() + (resolution_ * 0.5);
-    pass.setInputCloud(pcl_cloud);
+    pass.setInputCloud(cloud);
     pass.setFilterFieldName("x");
     pass.setFilterLimits(x_min, x_max);
     pass.filter(*cloud_filtered);
