@@ -39,11 +39,11 @@ CostmapInterpolationComponent::CostmapInterpolationComponent(const rclcpp::NodeO
   get_parameter("num_grids", num_grids_);
 
   //subscriber
-  grid_map_sub_ = create_subscription<grid_map_msgs::msg::GridMap>(
+  grid_map_sub_ = create_subscription<GridMapAdaptedType>(
     grid_map_topic, 1,
     std::bind(&CostmapInterpolationComponent::gridmapCallback, this, std::placeholders::_1));
 
-  interpolation_map_pub_ = create_publisher<grid_map_msgs::msg::GridMap>("interpolation_map", 1);
+  interpolation_map_pub_ = create_publisher<GridMapAdaptedType>("interpolation_map", 1);
   initGridMap();
 }
 
@@ -56,20 +56,16 @@ void CostmapInterpolationComponent::initGridMap()
     interpolation_map_resolution_, grid_map::Position(0.0, 0.0));
 }
 
-void CostmapInterpolationComponent::gridmapCallback(
-  const grid_map_msgs::msg::GridMap::SharedPtr msg)
+void CostmapInterpolationComponent::gridmapCallback(const grid_map::GridMap & msg)
 {
   interpolation_map_.add("interpolation_layer", 0.0);
-  grid_map::GridMap input_map;
-  grid_map::GridMapRosConverter::fromMessage(*msg, input_map);
   for (grid_map::GridMapIterator iterator(interpolation_map_); !iterator.isPastEnd(); ++iterator) {
     grid_map::Position position;
     interpolation_map_.getPosition(*iterator, position);
-    interpolation_map_.at("interpolation_layer", *iterator) = input_map.atPosition(
-      input_layer_name_, position, interpolationMethods.at(interpolationMethod_));
+    interpolation_map_.at("interpolation_layer", *iterator) =
+      msg.atPosition(input_layer_name_, position, interpolationMethods.at(interpolationMethod_));
   }
-  auto interpolation_map_msg = grid_map::GridMapRosConverter::toMessage(interpolation_map_);
-  interpolation_map_pub_->publish(std::move(interpolation_map_msg));
+  interpolation_map_pub_->publish(interpolation_map_);
 }
 }  // namespace robotx_costmap_calculator
 RCLCPP_COMPONENTS_REGISTER_NODE(robotx_costmap_calculator::CostmapInterpolationComponent)

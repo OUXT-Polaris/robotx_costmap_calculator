@@ -79,6 +79,7 @@ extern "C" {
 #include <grid_map_core/iterators/GridMapIterator.hpp>
 #include <grid_map_msgs/msg/grid_map.hpp>
 #include <grid_map_ros/grid_map_ros.hpp>
+#include <grid_map_type_adapter/type_adapter.hpp>
 #include <memory>
 #include <pcl_apps_msgs/msg/polygon_array.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -89,21 +90,28 @@ namespace robotx_costmap_calculator
 {
 class CostmapCalculatorComponent : public rclcpp::Node
 {
+  using GridMapAdaptedType = rclcpp::TypeAdapter<grid_map::GridMap, grid_map_msgs::msg::GridMap>;
+  using PCLPointType = pcl::PointXYZI;
+  using PCLPointCloudType = pcl::PointCloud<PCLPointType>;
+  using PointCloudAdaptedType =
+    rclcpp::TypeAdapter<PCLPointCloudType, sensor_msgs::msg::PointCloud2>;
+  using PCLPointCloudTypePtr = std::shared_ptr<PCLPointCloudType>;
+
 public:
   COSTMAP_CALCULATOR_COSTMAP_CALCULATOR_COMPONENT_PUBLIC
   explicit CostmapCalculatorComponent(const rclcpp::NodeOptions & options);
 
 private:
-  rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr grid_map_pub_;
-  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_sub_;
+  rclcpp::Publisher<GridMapAdaptedType>::SharedPtr grid_map_pub_;
+  rclcpp::Subscription<PointCloudAdaptedType>::SharedPtr pointcloud_sub_;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr pose_sub_;
   void initGridMap();
-  void pointCloudCallback(const sensor_msgs::msg::PointCloud2::SharedPtr cloud);
+  void pointCloudCallback(const PCLPointCloudTypePtr cloud);
   void poseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr pose);
-  boost::circular_buffer<sensor_msgs::msg::PointCloud2::SharedPtr> cloud_buffer_;
+  boost::circular_buffer<PCLPointCloudTypePtr> cloud_buffer_;
   grid_map::GridMap grid_map_;
   void addPointCloudToGridMap(
-    const sensor_msgs::msg::PointCloud2 & cloud, const std::string & grid_map_layer_name);
+    const PCLPointCloudTypePtr & cloud, const std::string & grid_map_layer_name);
   void combine();
   void publish();
   double resolution_;

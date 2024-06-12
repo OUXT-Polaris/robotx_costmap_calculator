@@ -31,11 +31,11 @@ CostmapFilterComponent::CostmapFilterComponent(const rclcpp::NodeOptions & optio
   get_parameter("grid_map_topic", grid_map_topic);
 
   //subscriber
-  grid_map_sub_ = create_subscription<grid_map_msgs::msg::GridMap>(
+  grid_map_sub_ = create_subscription<GridMapAdaptedType>(
     grid_map_topic, 1,
     std::bind(&CostmapFilterComponent::gridmapCallback, this, std::placeholders::_1));
 
-  filter_map_pub_ = create_publisher<grid_map_msgs::msg::GridMap>("filter_map", 1);
+  filter_map_pub_ = create_publisher<GridMapAdaptedType>("filter_map", 1);
 
   if (filterChain_.configure(
         filterChainParametersName_, get_node_logging_interface(),
@@ -48,17 +48,14 @@ CostmapFilterComponent::CostmapFilterComponent(const rclcpp::NodeOptions & optio
   }
 }
 
-void CostmapFilterComponent::gridmapCallback(const grid_map_msgs::msg::GridMap::SharedPtr msg)
+void CostmapFilterComponent::gridmapCallback(const grid_map::GridMap & msg)
 {
-  grid_map::GridMap input_map;
-  grid_map::GridMapRosConverter::fromMessage(*msg, input_map);
   grid_map::GridMap filtered_map;
-  if (!filterChain_.update(input_map, filtered_map)) {
+  if (!filterChain_.update(msg, filtered_map)) {
     RCLCPP_ERROR(this->get_logger(), "Could not update the grid map filter chain!");
     return;
   }
-  auto filtered_map_msg = grid_map::GridMapRosConverter::toMessage(filtered_map);
-  filter_map_pub_->publish(std::move(filtered_map_msg));
+  filter_map_pub_->publish(filtered_map);
 }
 }  // namespace robotx_costmap_calculator
 RCLCPP_COMPONENTS_REGISTER_NODE(robotx_costmap_calculator::CostmapFilterComponent)

@@ -62,6 +62,7 @@ extern "C" {
 #include <grid_map_core/iterators/GridMapIterator.hpp>
 #include <grid_map_msgs/msg/grid_map.hpp>
 #include <grid_map_ros/grid_map_ros.hpp>
+#include <grid_map_type_adapter/type_adapter.hpp>
 #include <memory>
 #include <pcl_apps_msgs/msg/polygon_array.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -71,13 +72,15 @@ namespace robotx_costmap_calculator
 {
 class CostmapToPolygonComponent : public rclcpp::Node
 {
+  using GridMapAdaptedType = rclcpp::TypeAdapter<grid_map::GridMap, grid_map_msgs::msg::GridMap>;
+
 public:
   COSTMAP_CALCULATOR_COSTMAP_TO_POLYGON_COMPONENT_PUBLIC
   explicit CostmapToPolygonComponent(const rclcpp::NodeOptions & options);
 
 private:
-  rclcpp::Subscription<grid_map_msgs::msg::GridMap>::SharedPtr grid_map_sub_;
-  void gridmapCallback(const grid_map_msgs::msg::GridMap::SharedPtr msg);
+  rclcpp::Subscription<GridMapAdaptedType>::SharedPtr grid_map_sub_;
+  void gridmapCallback(const grid_map::GridMap & msg);
   std::unordered_map<double, double> position_map;
 };
 }  // namespace robotx_costmap_calculator
