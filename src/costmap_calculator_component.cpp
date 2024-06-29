@@ -59,6 +59,7 @@ CostmapCalculatorComponent::CostmapCalculatorComponent(const rclcpp::NodeOptions
   std::string key;
   pose_buffer_ =
     std::make_shared<data_buffer::PoseStampedDataBuffer>(get_clock(), key, buffer_length);
+  cloud_buffer_ = boost::circular_buffer<PCLPointCloudTypePtr>(cloud_buffer_size_);
 
   pointcloud_sub_ = create_subscription<PointCloudAdaptedType>(
     points_raw_topic, 10, [this](const PCLPointCloudTypePtr msg) { pointCloudCallback(msg); });
@@ -68,8 +69,6 @@ CostmapCalculatorComponent::CostmapCalculatorComponent(const rclcpp::NodeOptions
     std::bind(&CostmapCalculatorComponent::poseCallback, this, std::placeholders::_1));
 
   grid_map_pub_ = create_publisher<GridMapAdaptedType>("grid_map", 1);
-
-  cloud_buffer_ = boost::circular_buffer<PCLPointCloudTypePtr>(cloud_buffer_size_);
 }
 
 void CostmapCalculatorComponent::initGridMap()
@@ -93,7 +92,7 @@ void CostmapCalculatorComponent::poseCallback(const geometry_msgs::msg::PoseStam
   return;
 }
 
-void CostmapCalculatorComponent::pointCloudCallback(const PCLPointCloudTypePtr cloud)
+void CostmapCalculatorComponent::pointCloudCallback(const PCLPointCloudTypePtr & cloud)
 {
   cloud_buffer_.push_back(cloud);
   for (size_t i = 0; i < cloud_buffer_.size(); i++) {

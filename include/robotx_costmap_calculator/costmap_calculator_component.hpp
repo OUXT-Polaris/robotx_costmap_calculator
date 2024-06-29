@@ -82,6 +82,7 @@ extern "C" {
 #include <grid_map_type_adapter/type_adapter.hpp>
 #include <memory>
 #include <pcl_apps_msgs/msg/polygon_array.hpp>
+#include <pcl_type_adapter/pcl_type_adapter.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/laser_scan.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
@@ -93,9 +94,9 @@ class CostmapCalculatorComponent : public rclcpp::Node
   using GridMapAdaptedType = rclcpp::TypeAdapter<grid_map::GridMap, grid_map_msgs::msg::GridMap>;
   using PCLPointType = pcl::PointXYZI;
   using PCLPointCloudType = pcl::PointCloud<PCLPointType>;
-  using PointCloudAdaptedType =
-    rclcpp::TypeAdapter<PCLPointCloudType, sensor_msgs::msg::PointCloud2>;
   using PCLPointCloudTypePtr = std::shared_ptr<PCLPointCloudType>;
+  using PointCloudAdaptedType =
+    rclcpp::TypeAdapter<PCLPointCloudTypePtr, sensor_msgs::msg::PointCloud2>;
 
 public:
   COSTMAP_CALCULATOR_COSTMAP_CALCULATOR_COMPONENT_PUBLIC
@@ -106,7 +107,7 @@ private:
   rclcpp::Subscription<PointCloudAdaptedType>::SharedPtr pointcloud_sub_;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr pose_sub_;
   void initGridMap();
-  void pointCloudCallback(const PCLPointCloudTypePtr cloud);
+  void pointCloudCallback(const PCLPointCloudTypePtr & cloud);
   void poseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr pose);
   boost::circular_buffer<PCLPointCloudTypePtr> cloud_buffer_;
   grid_map::GridMap grid_map_;
