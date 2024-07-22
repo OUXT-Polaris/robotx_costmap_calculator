@@ -125,29 +125,25 @@ void CostmapCalculatorComponent::publish()
 void CostmapCalculatorComponent::combine()
 {
   grid_map_.add("combined", 0.0);
-  if (cloud_buffer_.size() == cloud_buffer_size_) {
-
-    for (size_t i = 0; i < cloud_buffer_size_; i++) {
-      double sum_log_odds = 0.0;
-
-      for (grid_map::GridMapIterator iterator(grid_map_); !iterator.isPastEnd(); ++iterator) {
-        double cells_exist_pointcloud = grid_map.at("point_layer0",*iterator);
-        if(cells_exist_pointcloud == 1.0){
-            double measurement_log_odds = std::log(0.8/0.2);
-        }
-        else{
-            double measurement_log_odds = std::log(0.2/0.8);
-        }
-        sum_log_odds += measurement_log_odds;
+  if (cloud_buffer_.size() != cloud_buffer_size_) {
+    return;
+  }
+  
+  double sum_log_odds = 0.0;
+  for (size_t i = 0; i < cloud_buffer_size_; i++) {
+    for (grid_map::GridMapIterator iterator(grid_map_); !iterator.isPastEnd(); ++iterator) {
+      if(grid_map.at("point_layer" + std::to_string(i),*iterator) > 0.5) {
+        sum_log_odds += std::log(0.8/0.2);
       }
-      //オッズを確率値に変える
-      double sum_prob = 1.0 - 1.0/(1.0 + std::exp(sum_log_odds)); 
-
-      //あるレイヤーのあるセルに最終的な値を格納
-      grid_map_.at("combined",*iterator) - sum_prob;
+      else {
+        sum_log_odds += std::log(0.2/0.8);
+      }
+      if(i == (cloud_buffer_size_ - 1)) {
+        //あるレイヤーのあるセルに最終的な値を格納
+        grid_map_.at("combined",*iterator) = 1.0 - 1.0/(1.0 + std::exp(sum_log_odds));
+      }
     }
   }
-
 } 
 
 void CostmapCalculatorComponent::addPointCloudToGridMap(
